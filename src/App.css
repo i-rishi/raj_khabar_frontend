@@ -1,0 +1,181 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap");
+
+:root {
+  --primary-color: #800000;
+  --secondary-color: #f4f0e4;
+}
+
+* {
+  margin: 0px;
+  padding: 0px;
+}
+
+body {
+  font-family: "Open Sans", sans-serif;
+  background-color: var(--secondary-color);
+}
+
+header {
+  width: 100%;
+  height: 70px;
+  background-color: var(--primary-color);
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+header .logo {
+  width: 141.39px;
+}
+
+header button.rounded-circle {
+  min-width: 40px !important;
+  width: 40px !important;
+  height: 40px !important;
+  background-color: var(--secondary-color);
+  color: var(--primary-color);
+  font-size: 18px !important;
+}
+
+.SearchBox {
+  width: 400px;
+  height: 40px;
+  background-color: var(--secondary-color);
+  border-radius: 6px;
+  padding: 3px 15px;
+}
+
+.SearchBox input {
+  background: transparent;
+  border: none;
+  outline: none;
+  padding-left: 0;
+  font-size: 14px;
+  color: black;
+}
+
+.SearchBox input::-webkit-input-placeholder {
+  color: rgba(128, 0, 0, 0.5);
+}
+
+.SearchBox svg {
+  font-size: 18px;
+  color: var(--primary-color);
+}
+
+.myAcc {
+  text-align: left !important;
+  background-color: var(--primary-color) !important;
+  color: var(--secondary-color) !important;
+  border-radius: 10px !important;
+}
+
+.myAcc .userImg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--secondary-color);
+  padding: 2px;
+  border-radius: 100%;
+}
+
+.myAcc .userImg .rounded-circle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  position: relative;
+}
+
+.myAcc .userImg .rounded-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.myAcc .userInfo {
+  margin-left: 5px;
+  padding-left: 5px;
+}
+
+.myAcc .userInfo h4 {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--secondary-color);
+  margin-bottom: 0;
+}
+
+.myAcc .userInfo p {
+  font-size: 10px;
+  color: var(--secondary-color);
+  margin-top: 0;
+  opacity: 0.7;
+}
+
+.main .sideBarWrapper .sidebar {
+  padding-top: 70px;
+}
+
+.content {
+  padding: 20px;
+  padding-top: 60px;
+  flex: 1;
+  min-height: 100vh;
+  color: black;
+  width: 100%;
+}
+
+/* Class for icons on the Post Table */
+.action-icon {
+  color: #800000;
+  transition: all 0.2s ease;
+}
+
+.action-icon:hover {
+  color: #a0522d;
+  transform: scale(1.2);
+}
+
+.ProseMirror table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ProseMirror th,
+.ProseMirror td {
+  border: 1px solid #ccc;
+  padding: 8px;
+}
+
+/* Add this to your CSS file */
+.tiptap-image-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.tiptap-image-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 10;
+  background: #fff;
+  border-radius: 50%;
+  border: 1px solid #800000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+.tiptap-image-remove:hover {
+  background: #800000;
+  color: #fff;
+}
