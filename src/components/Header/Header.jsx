@@ -9,7 +9,7 @@ import {
 } from "react-icons/md";
 import { SearchBox } from "../SearchBox/SearchBox";
 import { Box } from "@mui/material";
-import logo from "../../assets/images/logo.jpg";
+import logo from "../../assets/images/rajkhabar.png";
 
 import { useState } from "react";
 

@@ -52,7 +52,9 @@ export function PostFields({ register, errors, watch, setValue }) {
 
   useEffect(() => {
     if (selectedCategory) {
-      loadSubcategories(selectedCategory);
+      loadSubcategories(
+        
+      );
     }
   }, [selectedCategory, loadSubcategories]);
 

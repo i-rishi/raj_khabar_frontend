@@ -1,6 +1,7 @@
 import {
   Box,
   IconButton,
+  Button,
   Table,
   TableBody,
   TableCell,
@@ -10,12 +11,18 @@ import {
   Paper,
   Typography,
   TextField,
-  TablePagination
+  TablePagination,
+  Stack
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import { useState } from "react";
 
-export function CategoryTable({ categories, onEdit, onDelete }) {
+export function CategoryTable({
+  categories,
+  onEdit,
+  onDelete,
+  onCreateCategory
+}) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -47,8 +54,12 @@ export function CategoryTable({ categories, onEdit, onDelete }) {
         borderRadius: "10px"
       }}
     >
-      {/* Search Box */}
-      <Box sx={{ mb: 2 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 2 }}
+      >
         <TextField
           label="Search Category"
           variant="outlined"
@@ -57,6 +68,7 @@ export function CategoryTable({ categories, onEdit, onDelete }) {
           onChange={handleSearchChange}
           sx={{
             backgroundColor: "#f4f0e4",
+            width: "80%",
             "& .MuiOutlinedInput-root": {
               "& fieldset": { borderColor: "#800000" },
               "&:hover fieldset": { borderColor: "#a0522d" },
@@ -66,7 +78,18 @@ export function CategoryTable({ categories, onEdit, onDelete }) {
             "& label.Mui-focused": { color: "#800000" }
           }}
         />
-      </Box>
+        <Button
+          variant="contained"
+          sx={{
+            backgroundColor: "#800000",
+            "&:hover": { backgroundColor: "#a00000" },
+            textTransform: "none"
+          }}
+          onClick={onCreateCategory}
+        >
+          Add Category
+        </Button>
+      </Stack>
 
       {/* Table */}
       <TableContainer>
