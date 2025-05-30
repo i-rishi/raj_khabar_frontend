@@ -15,6 +15,7 @@ import {
   CircularProgress
 } from "@mui/material";
 import { Add as AddIcon, ExpandMore, Edit, Delete } from "@mui/icons-material";
+import { ConfirmDialog } from "../../components/Dialog/Dialog";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +25,8 @@ export function CategoryManagement() {
   const [categories, setCategories] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeleteSlug, setPendingDeleteSlug] = useState(null);
   const navigate = useNavigate();
 
   // Fetch categories with subcategories
@@ -44,6 +47,34 @@ export function CategoryManagement() {
   const filteredCategories = categories.filter((cat) =>
     cat.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleDeleteCategory = (categorySlug) => {
+    setPendingDeleteSlug(categorySlug);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    fetch(`${API_BASE_URL}/api/category/delete-category/${pendingDeleteSlug}`, {
+      method: "DELETE",
+      credentials: "include"
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setCategories(
+            categories.filter((cat) => cat.slug !== pendingDeleteSlug)
+          );
+          setConfirmOpen(false);
+          showToast("Category deleted successfully", "success");
+        } else {
+          showToast(data.message || "Failed to delete category", "error");
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting category:", error);
+        showToast("Error deleting category", "error");
+      });
+  };
 
   return (
     <Box
@@ -139,7 +170,6 @@ export function CategoryManagement() {
                     color: "#4d0000"
                   }}
                 />
-                {/* Remove IconButtons from here */}
               </AccordionSummary>
               <AccordionDetails
                 sx={{ display: "flex", flexDirection: "column" }}
@@ -150,17 +180,26 @@ export function CategoryManagement() {
                   <IconButton
                     size="small"
                     sx={{ color: "#800000", mr: 1 }}
-                    // onClick={() => handleEditCategory(category)}
+                    onClick={() =>
+                      navigate(`/category/edit-category/${category.slug}`)
+                    }
                   >
                     <Edit />
                   </IconButton>
                   <IconButton
                     size="small"
                     sx={{ color: "#800000" }}
-                    // onClick={() => handleDeleteCategory(category)}
+                    onClick={() => handleDeleteCategory(category.slug)}
                   >
                     <Delete />
                   </IconButton>
+                  <ConfirmDialog
+                    open={confirmOpen}
+                    title="Delete Category"
+                    content="Are you sure you want to delete this category?"
+                    onConfirm={handleConfirmDelete}
+                    onCancel={() => setConfirmOpen(false)}
+                  />
                 </Box>
                 <Typography sx={{ mb: 1, color: "#4d0000" }}>
                   {category.description || "No description"}

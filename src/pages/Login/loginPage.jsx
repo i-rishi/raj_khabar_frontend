@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Box, TextField, Button, Typography, Paper } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import logo from "../../assets/images/logo.jpg";
+import rajkhabar from "../../assets/images/rajkhabar.png";
 import Cookies from "js-cookie";
 import { API_BASE_URL } from "../../config";
 
@@ -75,7 +75,11 @@ export default function LoginPage() {
             width: "100%"
           }}
         >
-          <img src={logo} alt="Logo" style={{ height: 72, marginBottom: 8 }} />
+          <img
+            src={rajkhabar}
+            alt="Logo"
+            style={{ height: 72, marginBottom: 8 }}
+          />
         </Box>
         <Typography
           variant="h6"
