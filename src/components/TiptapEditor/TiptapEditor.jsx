@@ -32,6 +32,7 @@ import FontDownloadIcon from "@mui/icons-material/FontDownload";
 import LinkIcon from "@mui/icons-material/Link";
 import CodeIcon from "@mui/icons-material/Code";
 import { IoCloseCircle } from "react-icons/io5";
+import { API_BASE_URL } from "../../config";
 import { useTheme } from "@mui/material/styles";
 
 import { Extension } from "@tiptap/core";
@@ -163,7 +164,7 @@ export default function TiptapEditor({ onChange, initialContent }) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("http://localhost:5000/api/s3/upload", {
+      const response = await fetch(`${API_BASE_URL}/api/s3/upload`, {
         method: "POST",
         body: formData,
         credentials: "include"

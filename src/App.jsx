@@ -15,7 +15,6 @@ import { Sidebar } from "./components/SideBar/Sidebar";
 import PostManagement from "./pages/Posts/PostManagement";
 import { CategoryManagement } from "./pages/Category/CategoryManagement";
 import { CategoryCreate } from "./pages/Category/CategoryCreate";
-import { PostEditPage } from "./pages/Posts/postEditPage";
 import { CategoryProvider } from "./context/CategoryContext";
 import { ToastProvider } from "./context/ToastContext";
 import LoginPage from "./pages/Login/loginPage";
