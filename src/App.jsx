@@ -13,6 +13,7 @@ import { PostCreate } from "./pages/Posts/PostCreate";
 import { Header } from "./components/Header/Header";
 import { Sidebar } from "./components/SideBar/Sidebar";
 import PostManagement from "./pages/Posts/PostManagement";
+import PostEditPage from "./pages/Posts/PostEditPage";
 import { CategoryManagement } from "./pages/Category/CategoryManagement";
 import { CategoryCreate } from "./pages/Category/CategoryCreate";
 import { CategoryProvider } from "./context/CategoryContext";
