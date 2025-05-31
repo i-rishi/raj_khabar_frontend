@@ -47,6 +47,21 @@ export function CategoryCreate() {
     }
   });
 
+  // Auto-generate slug from name
+  const handleNameChange = (e) => {
+    const name = e.target.value;
+    setValue("name", name);
+    setValue(
+      "slug",
+      name
+        .toLowerCase()
+        .replace(/\s+/g, "_")
+        .replace(/[^a-z0-9_]/g, "")
+        .replace(/_+/g, "_")
+        .replace(/^_+|_+$/g, "")
+    );
+  };
+
   const onSubmit = async (data) => {
     try {
       const formData = new FormData();
@@ -139,6 +154,7 @@ export function CategoryCreate() {
               fullWidth
               variant="outlined"
               sx={{ background: "#fff" }}
+              onChange={handleNameChange}
             />
             <TextField
               label="Slug"

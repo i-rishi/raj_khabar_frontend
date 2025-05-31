@@ -57,9 +57,6 @@ export function Header({ onMenuClick, isDrawerOpen }) {
               <SearchBox />
             </div>
             <div className="col-sm-7 d-flex align-items-center justify-content-end part_2 pl-4">
-              <Button className="rounded-circle" sx={{ marginRight: "16px" }}>
-                <MdOutlineLightMode />
-              </Button>
               <div className="myAccWrapper">
                 <Button
                   className="myAcc d-flex align-items-center"

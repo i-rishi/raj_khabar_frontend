@@ -27,6 +27,8 @@ export function CategoryManagement() {
   const [loading, setLoading] = useState(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDeleteSlug, setPendingDeleteSlug] = useState(null);
+  const [pendingDeleteSub, setPendingDeleteSub] = useState(null); // <-- for subcategory
+  const [confirmSubOpen, setConfirmSubOpen] = useState(false); // <-- for subcategory
   const navigate = useNavigate();
 
   // Fetch categories with subcategories
@@ -73,6 +75,48 @@ export function CategoryManagement() {
       .catch((error) => {
         console.error("Error deleting category:", error);
         showToast("Error deleting category", "error");
+      });
+  };
+
+  // Subcategory delete handler
+  const handleDeleteSubcategory = (categorySlug, subSlug) => {
+    setPendingDeleteSlug(categorySlug);
+    setPendingDeleteSub(subSlug);
+    setConfirmSubOpen(true);
+  };
+
+  const handleConfirmDeleteSub = () => {
+    fetch(
+      `${API_BASE_URL}/api/category/delete-sub-category/${pendingDeleteSub}`,
+      {
+        method: "DELETE",
+        credentials: "include"
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setCategories((prev) =>
+            prev.map((cat) =>
+              cat.slug === pendingDeleteSlug
+                ? {
+                    ...cat,
+                    subcategories: cat.subcategories.filter(
+                      (sub) => sub.slug !== pendingDeleteSub
+                    )
+                  }
+                : cat
+            )
+          );
+          setConfirmSubOpen(false);
+          showToast("Subcategory deleted successfully", "success");
+        } else {
+          showToast(data.message || "Failed to delete subcategory", "error");
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting subcategory:", error);
+        showToast("Error deleting subcategory", "error");
       });
   };
 
@@ -229,14 +273,20 @@ export function CategoryManagement() {
                       <IconButton
                         size="small"
                         sx={{ color: "#800000", mr: 1 }}
-                        // onClick={() => handleEditSubcategory(sub)}
+                        onClick={() =>
+                          navigate(
+                            `/category/${category.slug}/edit-subcategory/${sub.slug}`
+                          )
+                        }
                       >
                         <Edit fontSize="small" />
                       </IconButton>
                       <IconButton
                         size="small"
                         sx={{ color: "#800000" }}
-                        // onClick={() => handleDeleteSubcategory(sub)}
+                        onClick={() =>
+                          handleDeleteSubcategory(category.slug, sub.slug)
+                        }
                       >
                         <Delete fontSize="small" />
                       </IconButton>
@@ -257,7 +307,9 @@ export function CategoryManagement() {
                     fontWeight: 600,
                     "&:hover": { borderColor: "#4d0000", color: "#4d0000" }
                   }}
-                  // onClick={() => handleAddSubcategory(category)}
+                  onClick={() =>
+                    navigate(`/category/${category.slug}/subcategory/create`)
+                  }
                 >
                   Add Subcategory
                 </Button>
@@ -265,6 +317,13 @@ export function CategoryManagement() {
             </Accordion>
           ))
         )}
+        <ConfirmDialog
+          open={confirmSubOpen}
+          title="Delete Subcategory"
+          content="Are you sure you want to delete this subcategory?"
+          onConfirm={handleConfirmDeleteSub}
+          onCancel={() => setConfirmSubOpen(false)}
+        />
       </Paper>
     </Box>
   );

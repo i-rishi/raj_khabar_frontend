@@ -16,7 +16,7 @@ export function ConfirmDialog({ open, title, content, onConfirm, onCancel }) {
       BackdropProps={{
         sx: {
           backgroundColor: "transparent", // subtle maroon tint, adjust as needed
-          backdropFilter: "blur(0.8px)"
+          backdropFilter: "blur(0.2px)"
         }
       }}
       PaperProps={{

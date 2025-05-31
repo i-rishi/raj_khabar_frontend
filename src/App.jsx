@@ -14,10 +14,14 @@ import { Header } from "./components/Header/Header";
 import { Sidebar } from "./components/SideBar/Sidebar";
 import PostManagement from "./pages/Posts/PostManagement";
 import { PostEditPage } from "./pages/Posts/PostEditPage";
+//category imports
 import { CategoryManagement } from "./pages/Category/CategoryManagement";
 import { CategoryCreate } from "./pages/Category/CategoryCreate";
 import { CategoryEdit } from "./pages/Category/CategoryEdit";
 import { CategoryProvider } from "./context/CategoryContext";
+//subcategory imports
+import { SubcategoryCreate } from "./pages/Subcategory/SubcategoryCreate";
+import { SubcategoryEdit } from "./pages/Subcategory/SubcategoryEdit";
 import { ToastProvider } from "./context/ToastContext";
 import LoginPage from "./pages/Login/loginPage";
 import Cookies from "js-cookie";
@@ -115,6 +119,22 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <CategoryEdit />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/category/:parentSlug/subcategory/create"
+                element={
+                  <ProtectedRoute>
+                    <SubcategoryCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/category/:parentSlug/edit-subcategory/:slug"
+                element={
+                  <ProtectedRoute>
+                    <SubcategoryEdit />
                   </ProtectedRoute>
                 }
               />
