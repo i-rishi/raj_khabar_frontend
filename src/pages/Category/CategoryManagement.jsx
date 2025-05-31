@@ -32,7 +32,7 @@ export function CategoryManagement() {
   // Fetch categories with subcategories
   useEffect(() => {
     setLoading(true);
-    fetch(`${API_BASE_URL}/api/category/getcategories`, {
+    fetch(`${API_BASE_URL}/api/category/getcategories/admin`, {
       credentials: "include"
     })
       .then((res) => res.json())
