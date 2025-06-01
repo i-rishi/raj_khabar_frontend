@@ -15,17 +15,29 @@ import {
   Stack
 } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../../config";
+import { useToast } from "../../context/ToastContext";
+import { ConfirmDialog } from "../Dialog/Dialog";
 
 export function CategoryTable({
-  categories,
-  onEdit,
-  onDelete,
+  categories: categoriesProp,
   onCreateCategory
 }) {
+  const { showToast } = useToast();
   const [search, setSearch] = useState("");
+  const [categories, setCategories] = useState(categoriesProp || []);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingDeleteSlug, setPendingDeleteSlug] = useState(null);
+  const navigate = useNavigate();
+
+  // Sync local state with prop if prop changes
+  useEffect(() => {
+    setCategories(categoriesProp || []);
+  }, [categoriesProp]);
 
   const handleSearchChange = (e) => setSearch(e.target.value.toLowerCase());
   const handlePageChange = (_, newPage) => setPage(newPage);
@@ -44,6 +56,34 @@ export function CategoryTable({
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
+
+  const handleDeleteCategory = (categorySlug) => {
+    setPendingDeleteSlug(categorySlug);
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    fetch(`${API_BASE_URL}/api/category/delete-category/${pendingDeleteSlug}`, {
+      method: "DELETE",
+      credentials: "include"
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setCategories((prev) =>
+            prev.filter((cat) => cat.slug !== pendingDeleteSlug)
+          );
+          setConfirmOpen(false);
+          showToast("Category deleted successfully", "success");
+        } else {
+          showToast(data.message || "Failed to delete category", "error");
+        }
+      })
+      .catch((error) => {
+        console.error("Error deleting category:", error);
+        showToast("Error deleting category", "error");
+      });
+  };
 
   return (
     <Paper
@@ -121,7 +161,9 @@ export function CategoryTable({
                 <TableCell>{category.parentSlug || "—"}</TableCell>
                 <TableCell align="right">
                   <IconButton
-                    onClick={() => onEdit(category)}
+                    onClick={() =>
+                      navigate(`/category/edit-category/${category.slug}`)
+                    }
                     sx={{
                       color: "#800000",
                       "&:hover": {
@@ -133,7 +175,7 @@ export function CategoryTable({
                     <Edit fontSize="medium" />
                   </IconButton>
                   <IconButton
-                    onClick={() => onDelete(category)}
+                    onClick={() => handleDeleteCategory(category.slug)}
                     sx={{
                       color: "#800000",
                       "&:hover": {
@@ -182,6 +224,13 @@ export function CategoryTable({
             color: "#800000"
           }
         }}
+      />
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Subcategory"
+        content="Are you sure you want to delete this subcategory?"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmOpen(false)}
       />
     </Paper>
   );

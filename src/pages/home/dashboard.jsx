@@ -107,8 +107,6 @@ export function Dashboard() {
       />
       <CategoryTable
         categories={categories}
-        onEdit={(post) => console.log("Clicked on Edit" + post)}
-        onDelete={(post) => console.log("clicked on Delete" + post)}
         onCreateCategory={() => navigate("/dashboard/create-category")}
       />
     </>

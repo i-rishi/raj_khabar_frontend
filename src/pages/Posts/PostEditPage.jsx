@@ -15,35 +15,8 @@ export function PostEditPage() {
   const [loading, setLoading] = useState(true);
   const [post, setPost] = useState(null);
 
-  // Fetch post data by ID
-  useEffect(() => {
-    async function fetchPost() {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/post/posts/id/${id}`, {
-          credentials: "include"
-        });
-        const data = await res.json();
-        console.log("Fetched post data:", data);
-
-        if (data.success) {
-          setPost(data.post);
-        } else {
-          showToast(data.message || "Failed to fetch post.", "error");
-        }
-      } catch (error) {
-        showToast("Error fetching post.", "error");
-      }
-      setLoading(false);
-    }
-    fetchPost();
-    // eslint-disable-next-line
-  }, [id]);
-
-  // Set up react-hook-form with defaultValues from post
-  const methods = useForm({
-    defaultValues: {}
-  });
+  // Set up react-hook-form
+  const methods = useForm();
 
   const {
     register,
@@ -65,26 +38,46 @@ export function PostEditPage() {
     // Optionally set other fields here if needed
   }, [post]);
 
+  // Fetch post data by ID
   useEffect(() => {
-    if (post) {
-      reset({
-        title: post.title,
-        slug: post.slug,
-        content: post.content,
-        description: post.description,
-        category: post.category?._id || post.category,
-        categorySlug: post.categorySlug,
-        subCategory: post.subCategory?._id || post.subCategory,
-        subCategorySlug: post.subCategorySlug,
-        tags: post.tags,
-        status: post.status,
-        isVisibleInCarousel: post.isVisibleInCarousel,
-        type: post.type,
-        publishedAt: post.publishedAt,
-        imageUrl: post.imageUrl
-      });
+    async function fetchPost() {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/post/posts/id/${id}`, {
+          credentials: "include"
+        });
+        const data = await res.json();
+        if (data.success) {
+          setPost(data.post);
+          // Call reset here with the correct field mapping
+          reset({
+            title: data.post.title || "",
+            slug: data.post.slug || "",
+            content: data.post.content || "",
+            description: data.post.description || "",
+            category: data.post.category?._id || data.post.category || "",
+            categorySlug: data.post.categorySlug || "",
+            subCategory:
+              data.post.subCategory?._id || data.post.subCategory || "",
+            subCategorySlug: data.post.subCategorySlug || "",
+            tags: data.post.tags || "",
+            status: data.post.status || "",
+            isVisibleInCarousel: data.post.isVisibleInCarousel || false,
+            type: data.post.type || "",
+            publishedAt: data.post.publishedAt || "",
+            imageUrl: data.post.imageUrl || ""
+          });
+        } else {
+          showToast(data.message || "Failed to fetch post.", "error");
+        }
+      } catch (error) {
+        showToast("Error fetching post.", "error");
+      }
+      setLoading(false);
     }
-  }, [post, reset]);
+    fetchPost();
+    // eslint-disable-next-line
+  }, [id, reset]);
 
   const onSubmit = async (data) => {
     try {

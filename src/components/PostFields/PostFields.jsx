@@ -16,12 +16,10 @@ import TiptapEditor from "../TiptapEditor/TiptapEditor";
 export function PostFields({ register, errors, watch, setValue }) {
   const { categories, subcategories, loadSubcategories } = useCategories();
   const [editorContent, setEditorContent] = useState(null);
-  const selectedCategory = watch("categoryslug");
+  const selectedCategory = watch("categoryslug") || "";
 
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
-
-  console.log("editorContent => " + JSON.stringify(editorContent));
 
   const handleEditorChange = (json) => {
     setEditorContent(json);
@@ -52,9 +50,7 @@ export function PostFields({ register, errors, watch, setValue }) {
 
   useEffect(() => {
     if (selectedCategory) {
-      loadSubcategories(
-        
-      );
+      loadSubcategories(selectedCategory);
     }
   }, [selectedCategory, loadSubcategories]);
 
@@ -76,6 +72,7 @@ export function PostFields({ register, errors, watch, setValue }) {
           error={!!errors.title}
           helperText={errors.title?.message}
           sx={textfieldStyle}
+          value={watch("title") ?? ""}
         />
       </Grid>
 
@@ -90,6 +87,7 @@ export function PostFields({ register, errors, watch, setValue }) {
           error={!!errors.slug}
           helperText={errors.slug?.message}
           sx={textfieldStyle}
+          value={watch("slug") ?? ""}
         />
       </Grid>
       {/* Status */}
@@ -104,6 +102,7 @@ export function PostFields({ register, errors, watch, setValue }) {
           error={!!errors.status}
           helperText={errors.status?.message}
           sx={textfieldStyle}
+          value={watch("status") ?? ""}
           SelectProps={{
             MenuProps: {
               PaperProps: {
@@ -132,6 +131,7 @@ export function PostFields({ register, errors, watch, setValue }) {
           error={!!errors.category}
           helperText={errors.category?.message}
           sx={textfieldStyle}
+          value={selectedCategory}
           SelectProps={{
             MenuProps: {
               PaperProps: {
@@ -166,6 +166,7 @@ export function PostFields({ register, errors, watch, setValue }) {
             error={!!errors.subcategory}
             helperText={errors.subcategory?.message}
             sx={textfieldStyle}
+            value={watch("subcategoryslug") ?? ""}
             SelectProps={{
               MenuProps: {
                 PaperProps: {
@@ -197,6 +198,7 @@ export function PostFields({ register, errors, watch, setValue }) {
           error={!!errors.description}
           helperText={errors.description?.message}
           sx={textfieldStyle}
+          value={watch("description") ?? ""}
         />
       </Grid>
       <Grid size={6}>
@@ -303,6 +305,7 @@ export function PostFields({ register, errors, watch, setValue }) {
                 color: "#800000"
               }
             }}
+            checked={!!watch("isVisibleInCarousel")}
           />
         </label>
       </Grid>
@@ -325,6 +328,7 @@ export function PostFields({ register, errors, watch, setValue }) {
                 color: "#800000"
               }
             }}
+            checked={!!watch("showAdOnLinks")}
           />
         </label>
       </Grid>

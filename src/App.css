@@ -2,7 +2,8 @@
 
 :root {
   --primary-color: #800000;
-  --secondary-color: #f4f0e4;
+  --secondary-color: #fff;
+  /* --secondary-color: #f4f0e4; */
 }
 
 * {
