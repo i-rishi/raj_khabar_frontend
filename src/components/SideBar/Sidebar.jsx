@@ -14,6 +14,8 @@ import { MdOutlineDashboard, MdOutlinePostAdd } from "react-icons/md";
 import { FiLayers } from "react-icons/fi";
 import { TbCategoryPlus } from "react-icons/tb";
 import { IoSettingsOutline } from "react-icons/io5";
+import { TbTableOptions, TbTableDashed } from "react-icons/tb";
+import { LuCreditCard } from "react-icons/lu";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { useCategories } from "../../context/CategoryContext";
 
@@ -52,7 +54,22 @@ export function Sidebar({ open }) {
       }))
     },
     { icon: <MdOutlinePostAdd />, label: "Post Management", path: "/posts" },
+    {
+      icon: <TbTableDashed />,
+      label: "Table Management",
+      path: "/table-management"
+    },
+    {
+      icon: <LuCreditCard />,
+      label: "Card Management",
+      path: "/card-management"
+    },
     { icon: <TbCategoryPlus />, label: "Categories", path: "/category" },
+    {
+      icon: <TbTableOptions />,
+      label: "Table Structure",
+      path: "/table-structure"
+    },
     { icon: <IoSettingsOutline />, label: "Settings", path: "/settings" }
   ];
 

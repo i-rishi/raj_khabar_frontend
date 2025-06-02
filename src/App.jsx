@@ -22,6 +22,12 @@ import { CategoryProvider } from "./context/CategoryContext";
 //subcategory imports
 import { SubcategoryCreate } from "./pages/Subcategory/SubcategoryCreate";
 import { SubcategoryEdit } from "./pages/Subcategory/SubcategoryEdit";
+// table structure imports
+import { Tablestructure } from "./pages/Tablestructure/Tablestructure";
+import { TableManagement } from "./pages/Tablestructure/TableManagement";
+
+//Card Imports
+import { CardManagement } from "./pages/Cards/CardManagement";
 import { ToastProvider } from "./context/ToastContext";
 import LoginPage from "./pages/Login/loginPage";
 import Cookies from "js-cookie";
@@ -135,6 +141,30 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <SubcategoryEdit />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/table-structure"
+                element={
+                  <ProtectedRoute>
+                    <Tablestructure />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/table-management"
+                element={
+                  <ProtectedRoute>
+                    <TableManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/card-management"
+                element={
+                  <ProtectedRoute>
+                    <CardManagement />
                   </ProtectedRoute>
                 }
               />
