@@ -98,6 +98,15 @@ export function Tablestructure() {
       if (result.success) {
         showToast("Table structure created successfully!", "success");
         navigate("/table-structure");
+        setForm({
+          name: "",
+          slug: "",
+          description: "",
+          columns: [
+            { name: "", type: "text" },
+            { name: "", type: "text" }
+          ]
+        });
       } else {
         if (result.message === "Unauthorized") {
           navigate("/login");
