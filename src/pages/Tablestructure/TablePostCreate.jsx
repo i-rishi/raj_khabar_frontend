@@ -23,6 +23,7 @@ import { AddCircleOutline, Link as LinkIcon } from "@mui/icons-material";
 import { useCategories } from "../../context/CategoryContext";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
+import { useNavigate } from "react-router-dom";
 
 const steps = [
   "Basic Info",
@@ -34,6 +35,7 @@ const steps = [
 export function TablePostCreate() {
   const { categories, subcategories, loadSubcategories } = useCategories();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     name: "",
@@ -176,6 +178,10 @@ export function TablePostCreate() {
         setColumns([]);
         setActiveStep(0);
       } else {
+        if (data.message === "Unauthorized") {
+          navigate("/login");
+          return;
+        }
         showToast(data.message || "Failed to create table post", "error");
       }
     } catch (err) {
