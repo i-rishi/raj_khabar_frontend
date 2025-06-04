@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -19,8 +19,27 @@ import { useNavigate, useParams } from "react-router-dom";
 export function SubcategoryCreate() {
   const { showToast } = useToast();
   const navigate = useNavigate();
-  const { parentSlug } = useParams(); // <-- get from URL
+  const { parentSlug } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Table structures state
+  const [tableStructures, setTableStructures] = useState([]);
+
+  // Fetch table structures on mount
+  useEffect(() => {
+    async function fetchTableStructures() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/structure/get-table`, {
+          credentials: "include"
+        });
+        const data = await res.json();
+        if (data.success) setTableStructures(data.rowData || []);
+      } catch (error) {
+        showToast("Failed to load table structures", error);
+      }
+    }
+    fetchTableStructures();
+  }, [showToast]);
 
   const {
     register,
@@ -28,19 +47,19 @@ export function SubcategoryCreate() {
     control,
     setValue,
     formState: { errors },
-    watch // <-- add this
+    watch
   } = useForm({
     defaultValues: {
       name: "",
       slug: "",
       description: "",
       type: "",
-      parentSlug: parentSlug || "", // <-- set default from URL
+      parentSlug: parentSlug || "",
       tableStructureSlug: ""
     }
   });
 
-  const selectedType = watch("type"); // <-- watch the type field
+  const selectedType = watch("type");
 
   // Slug auto-format
   const handleNameChange = (e) => {
@@ -186,14 +205,29 @@ export function SubcategoryCreate() {
               {...register("parentSlug")}
               value={parentSlug}
             />
-            <TextField
-              label="Table Structure Slug"
-              {...register("tableStructureSlug")}
-              fullWidth
-              variant="outlined"
-              sx={{ background: "#fff" }}
-              helperText="(Optional, only for type 'table')"
-              disabled={selectedType !== "table"} // <-- disable unless type is table
+            <Controller
+              name="tableStructureSlug"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  label="Table Structure Slug"
+                  fullWidth
+                  variant="outlined"
+                  sx={{ background: "#fff" }}
+                  disabled={selectedType !== "table"}
+                  displayEmpty
+                >
+                  <MenuItem value="">
+                    <em>Select Table Structure</em>
+                  </MenuItem>
+                  {tableStructures.map((structure) => (
+                    <MenuItem key={structure.slug} value={structure.slug}>
+                      {structure.name} ({structure.slug})
+                    </MenuItem>
+                  ))}
+                </Select>
+              )}
             />
             <Button
               type="submit"
