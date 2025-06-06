@@ -17,19 +17,28 @@ import {
   Stepper,
   Step,
   StepLabel,
-  Paper
+  Paper,
+  LinearProgress,
+  Fade
 } from "@mui/material";
-import { AddCircleOutline, Link as LinkIcon } from "@mui/icons-material";
+import {
+  AddCircleOutline,
+  Link as LinkIcon,
+  CheckCircle,
+  Category,
+  TableChart,
+  ListAlt
+} from "@mui/icons-material";
 import { useCategories } from "../../context/CategoryContext";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
 import { useNavigate } from "react-router-dom";
 
 const steps = [
-  "Basic Info",
-  "Category & Structure",
-  "Table Rows",
-  "Review & Submit"
+  { label: "Basic Info", icon: <Category /> },
+  { label: "Category & Structure", icon: <TableChart /> },
+  { label: "Table Rows", icon: <ListAlt /> },
+  { label: "Review & Submit", icon: <CheckCircle /> }
 ];
 
 export function TablePostCreate() {
@@ -49,6 +58,7 @@ export function TablePostCreate() {
   const [tableStructures, setTableStructures] = useState([]);
   const [columns, setColumns] = useState([]);
   const [activeStep, setActiveStep] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   // Fetch table structures from backend
   useEffect(() => {
@@ -157,6 +167,7 @@ export function TablePostCreate() {
       showToast("Row fields must match the number of columns.", "error");
       return;
     }
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/table/create-table-post`, {
         method: "POST",
@@ -187,305 +198,374 @@ export function TablePostCreate() {
     } catch (err) {
       showToast("Error creating table post", "error");
     }
+    setLoading(false);
   };
+
+  // Progress bar percentage
+  const progress = ((activeStep + 1) / steps.length) * 100;
 
   return (
     <Box
       sx={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #f4f0e4 0%, #ffe0e0 100%)",
+        background: "linear-gradient(120deg, #f4f0e4 0%, #ffe0e0 100%)",
         display: "flex",
         alignItems: "flex-start",
         justifyContent: "center",
-        py: 6
+        py: 6,
+        position: "relative"
       }}
     >
+      {/* Animated Progress Bar */}
+      <LinearProgress
+        variant="determinate"
+        value={progress}
+        sx={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "100vw",
+          height: 6,
+          background: "#ffe0e0",
+          zIndex: 1000,
+          "& .MuiLinearProgress-bar": {
+            background: "linear-gradient(90deg, #800000 40%, #ffb6b6 100%)"
+          }
+        }}
+      />
       <Box sx={{ width: "100%", maxWidth: 800 }}>
-        <Stepper activeStep={activeStep} orientation="vertical" sx={{ mb: 4 }}>
-          {steps.map((label, idx) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
+        <Stepper
+          activeStep={activeStep}
+          alternativeLabel
+          sx={{
+            mb: 4,
+            "& .MuiStepIcon-root": { color: "#ffb6b6" },
+            "& .MuiStepIcon-root.Mui-active": { color: "#800000" },
+            "& .MuiStepIcon-root.Mui-completed": { color: "#800000" }
+          }}
+        >
+          {steps.map((step, idx) => (
+            <Step key={step.label}>
+              <StepLabel
+                icon={step.icon}
+                sx={{
+                  ".MuiStepLabel-label": {
+                    fontWeight: activeStep === idx ? 700 : 500,
+                    color: activeStep === idx ? "#800000" : "#888"
+                  }
+                }}
+              >
+                {step.label}
+              </StepLabel>
             </Step>
           ))}
         </Stepper>
-        <Paper
-          elevation={6}
-          sx={{
-            p: { xs: 2, sm: 4 },
-            borderRadius: 4,
-            boxShadow: "0 8px 32px rgba(128,0,0,0.15)"
-          }}
-        >
-          <form onSubmit={handleSubmit} autoComplete="off">
-            <Stack spacing={2}>
-              {activeStep === 0 && (
-                <>
-                  <Typography variant="h6" sx={{ color: "#800000" }}>
-                    Basic Info
-                  </Typography>
-                  <TextField
-                    label="Post Name"
-                    name="name"
-                    value={form.name}
-                    onChange={handleNameChange}
-                    required
-                    fullWidth
-                    variant="outlined"
-                    sx={{ background: "#fff" }}
-                  />
-                  <TextField
-                    label="Slug"
-                    name="slug"
-                    value={form.slug}
-                    onChange={handleChange}
-                    required
-                    fullWidth
-                    variant="outlined"
-                    sx={{ background: "#fff" }}
-                    InputProps={{
-                      startAdornment: (
-                        <Typography sx={{ color: "#800000", mr: 1 }}>
-                          /
-                        </Typography>
-                      )
-                    }}
-                  />
-                </>
-              )}
-              {activeStep === 1 && (
-                <>
-                  <Typography variant="h6" sx={{ color: "#800000" }}>
-                    Category & Table Structure
-                  </Typography>
-                  <FormControl fullWidth>
-                    <InputLabel>Category</InputLabel>
-                    <Select
-                      name="parentSlug"
-                      value={form.parentSlug}
-                      label="Category"
-                      onChange={handleChange}
-                      sx={{ background: "#fff" }}
-                      required
-                    >
-                      {categories.map((cat) => (
-                        <MenuItem key={cat.slug} value={cat.slug}>
-                          {cat.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <FormControl fullWidth>
-                    <InputLabel>Subcategory</InputLabel>
-                    <Select
-                      name="subcategorySlug"
-                      value={form.subcategorySlug}
-                      label="Subcategory"
-                      onChange={handleChange}
-                      sx={{ background: "#fff" }}
-                      required
-                      disabled={!form.parentSlug}
-                    >
-                      {(subcategories[form.parentSlug] || []).map((sub) => (
-                        <MenuItem key={sub.slug} value={sub.slug}>
-                          {sub.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <TextField
-                    label="Table Structure"
-                    value={
-                      tableStructures.find(
-                        (t) => t.slug === form.tableStructureSlug
-                      )?.name || ""
-                    }
-                    InputProps={{ readOnly: true }}
-                    fullWidth
-                    sx={{ background: "#fff" }}
-                  />
-                </>
-              )}
-              {activeStep === 2 && (
-                <>
-                  <Typography variant="h6" sx={{ color: "#800000" }}>
-                    Table Rows
-                  </Typography>
-                  <Divider sx={{ my: 2, borderColor: "#800000" }} />
-                  {columns.length > 0 && (
-                    <Grid container spacing={2}>
-                      {columns.map((col, idx) => (
-                        <React.Fragment key={idx}>
-                          <Grid item xs={12} md={6}>
-                            <TextField
-                              label={col.name}
-                              value={form.rowData[idx]?.row || ""}
-                              onChange={(e) =>
-                                handleRowChange(idx, "row", e.target.value)
-                              }
-                              required
-                              fullWidth
-                              variant="outlined"
-                              sx={{ background: "#fff" }}
-                              InputProps={{
-                                endAdornment: form.rowData[idx]?.isLink ? (
-                                  <Tooltip title="This row is a link">
-                                    <LinkIcon color="primary" />
-                                  </Tooltip>
-                                ) : null
-                              }}
-                            />
-                          </Grid>
-                          <Grid item xs={6} md={3}>
-                            <Typography
-                              sx={{
-                                color: "#800000",
-                                fontWeight: 500,
-                                mt: 2,
-                                display: "flex",
-                                alignItems: "center"
-                              }}
-                            >
-                              Is Link?
-                              <Switch
-                                checked={!!form.rowData[idx]?.isLink}
-                                onChange={(_, checked) =>
-                                  handleSwitchChange(idx, checked)
-                                }
-                                color="primary"
-                                sx={{ ml: 1 }}
-                              />
+        <Fade in>
+          <Paper
+            elevation={8}
+            sx={{
+              p: { xs: 2, sm: 4 },
+              borderRadius: 4,
+              boxShadow: "0 8px 32px rgba(128,0,0,0.18)",
+              background: "#fff",
+              minHeight: 420,
+              transition: "box-shadow 0.3s"
+            }}
+          >
+            <form onSubmit={handleSubmit} autoComplete="off">
+              <Stack spacing={3}>
+                {activeStep === 0 && (
+                  <Fade in>
+                    <Box>
+                      <Typography variant="h6" sx={{ color: "#800000", mb: 2 }}>
+                        Let's start with the basics!
+                      </Typography>
+                      <TextField
+                        label="Post Name"
+                        name="name"
+                        value={form.name}
+                        onChange={handleNameChange}
+                        required
+                        fullWidth
+                        variant="outlined"
+                        sx={{ background: "#fff", mb: 2 }}
+                      />
+                      <TextField
+                        label="Slug"
+                        name="slug"
+                        value={form.slug}
+                        onChange={handleChange}
+                        required
+                        fullWidth
+                        variant="outlined"
+                        sx={{ background: "#fff" }}
+                        InputProps={{
+                          startAdornment: (
+                            <Typography sx={{ color: "#800000", mr: 1 }}>
+                              /
                             </Typography>
-                          </Grid>
-                          <Grid item xs={6} md={3}>
-                            {form.rowData[idx]?.isLink && (
-                              <FormControl fullWidth>
-                                <InputLabel>Link Type</InputLabel>
-                                <Select
-                                  value={
-                                    form.rowData[idx]?.link_type || "external"
-                                  }
-                                  label="Link Type"
+                          )
+                        }}
+                      />
+                    </Box>
+                  </Fade>
+                )}
+                {activeStep === 1 && (
+                  <Fade in>
+                    <Box>
+                      <Typography variant="h6" sx={{ color: "#800000", mb: 2 }}>
+                        Choose category and structure
+                      </Typography>
+                      <FormControl fullWidth sx={{ mb: 2 }}>
+                        <InputLabel>Category</InputLabel>
+                        <Select
+                          name="parentSlug"
+                          value={form.parentSlug}
+                          label="Category"
+                          onChange={handleChange}
+                          sx={{ background: "#fff" }}
+                          required
+                        >
+                          {categories.map((cat) => (
+                            <MenuItem key={cat.slug} value={cat.slug}>
+                              {cat.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <FormControl fullWidth sx={{ mb: 2 }}>
+                        <InputLabel>Subcategory</InputLabel>
+                        <Select
+                          name="subcategorySlug"
+                          value={form.subcategorySlug}
+                          label="Subcategory"
+                          onChange={handleChange}
+                          sx={{ background: "#fff" }}
+                          required
+                          disabled={!form.parentSlug}
+                        >
+                          {(subcategories[form.parentSlug] || []).map((sub) => (
+                            <MenuItem key={sub.slug} value={sub.slug}>
+                              {sub.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <TextField
+                        label="Table Structure"
+                        value={
+                          tableStructures.find(
+                            (t) => t.slug === form.tableStructureSlug
+                          )?.name || ""
+                        }
+                        InputProps={{ readOnly: true }}
+                        fullWidth
+                        sx={{ background: "#fff" }}
+                      />
+                    </Box>
+                  </Fade>
+                )}
+                {activeStep === 2 && (
+                  <Fade in>
+                    <Box>
+                      <Typography variant="h6" sx={{ color: "#800000", mb: 2 }}>
+                        Fill in your table rows
+                      </Typography>
+                      <Divider sx={{ my: 2, borderColor: "#800000" }} />
+                      {columns.length > 0 && (
+                        <Grid container spacing={2}>
+                          {columns.map((col, idx) => (
+                            <React.Fragment key={idx}>
+                              <Grid item xs={12} md={6}>
+                                <TextField
+                                  label={col.name}
+                                  value={form.rowData[idx]?.row || ""}
                                   onChange={(e) =>
-                                    handleRowChange(
-                                      idx,
-                                      "link_type",
-                                      e.target.value
-                                    )
+                                    handleRowChange(idx, "row", e.target.value)
                                   }
+                                  required
+                                  fullWidth
+                                  variant="outlined"
                                   sx={{ background: "#fff" }}
+                                  InputProps={{
+                                    endAdornment: form.rowData[idx]?.isLink ? (
+                                      <Tooltip title="This row is a link">
+                                        <LinkIcon color="primary" />
+                                      </Tooltip>
+                                    ) : null
+                                  }}
+                                />
+                              </Grid>
+                              <Grid item xs={6} md={3}>
+                                <Typography
+                                  sx={{
+                                    color: "#800000",
+                                    fontWeight: 500,
+                                    mt: 2,
+                                    display: "flex",
+                                    alignItems: "center"
+                                  }}
                                 >
-                                  <MenuItem value="external">External</MenuItem>
-                                  <MenuItem value="internal">Internal</MenuItem>
-                                </Select>
-                              </FormControl>
-                            )}
-                          </Grid>
-                        </React.Fragment>
-                      ))}
-                    </Grid>
+                                  Is Link?
+                                  <Switch
+                                    checked={!!form.rowData[idx]?.isLink}
+                                    onChange={(_, checked) =>
+                                      handleSwitchChange(idx, checked)
+                                    }
+                                    color="primary"
+                                    sx={{ ml: 1 }}
+                                  />
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6} md={3}>
+                                {form.rowData[idx]?.isLink && (
+                                  <FormControl fullWidth>
+                                    <InputLabel>Link Type</InputLabel>
+                                    <Select
+                                      value={
+                                        form.rowData[idx]?.link_type ||
+                                        "external"
+                                      }
+                                      label="Link Type"
+                                      onChange={(e) =>
+                                        handleRowChange(
+                                          idx,
+                                          "link_type",
+                                          e.target.value
+                                        )
+                                      }
+                                      sx={{ background: "#fff" }}
+                                    >
+                                      <MenuItem value="external">
+                                        External
+                                      </MenuItem>
+                                      <MenuItem value="internal">
+                                        Internal
+                                      </MenuItem>
+                                    </Select>
+                                  </FormControl>
+                                )}
+                              </Grid>
+                            </React.Fragment>
+                          ))}
+                        </Grid>
+                      )}
+                    </Box>
+                  </Fade>
+                )}
+                {activeStep === 3 && (
+                  <Fade in>
+                    <Box>
+                      <Typography variant="h6" sx={{ color: "#800000", mb: 2 }}>
+                        Review your post before submitting!
+                      </Typography>
+                      <Box
+                        sx={{
+                          background: "#fffaf5",
+                          borderRadius: 2,
+                          p: 2,
+                          mb: 2,
+                          border: "1px solid #ffe0e0"
+                        }}
+                      >
+                        <Typography>
+                          <b>Name:</b> {form.name}
+                        </Typography>
+                        <Typography>
+                          <b>Slug:</b> {form.slug}
+                        </Typography>
+                        <Typography>
+                          <b>Category:</b>{" "}
+                          {
+                            categories.find((c) => c.slug === form.parentSlug)
+                              ?.name
+                          }
+                        </Typography>
+                        <Typography>
+                          <b>Subcategory:</b>{" "}
+                          {
+                            (subcategories[form.parentSlug] || []).find(
+                              (s) => s.slug === form.subcategorySlug
+                            )?.name
+                          }
+                        </Typography>
+                        <Typography>
+                          <b>Table Structure:</b>{" "}
+                          {
+                            tableStructures.find(
+                              (t) => t.slug === form.tableStructureSlug
+                            )?.name
+                          }
+                        </Typography>
+                        <Divider sx={{ my: 1 }} />
+                        <Typography>
+                          <b>Rows:</b>
+                        </Typography>
+                        <ul>
+                          {columns.map((col, idx) => (
+                            <li key={col.name}>
+                              <b>{col.name}:</b> {form.rowData[idx]?.row}{" "}
+                              {form.rowData[idx]?.isLink && (
+                                <span style={{ color: "#1976d2" }}>
+                                  [Link: {form.rowData[idx]?.link_type}]
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </Box>
+                    </Box>
+                  </Fade>
+                )}
+                <Stack direction="row" spacing={2} justifyContent="flex-end">
+                  {activeStep > 0 && (
+                    <Button variant="outlined" onClick={handleBack}>
+                      Back
+                    </Button>
                   )}
-                </>
-              )}
-              {activeStep === 3 && (
-                <>
-                  <Typography variant="h6" sx={{ color: "#800000" }}>
-                    Review & Submit
-                  </Typography>
-                  <Box
-                    sx={{ background: "#fffaf5", borderRadius: 2, p: 2, mb: 2 }}
-                  >
-                    <Typography>
-                      <b>Name:</b> {form.name}
-                    </Typography>
-                    <Typography>
-                      <b>Slug:</b> {form.slug}
-                    </Typography>
-                    <Typography>
-                      <b>Category:</b>{" "}
-                      {categories.find((c) => c.slug === form.parentSlug)?.name}
-                    </Typography>
-                    <Typography>
-                      <b>Subcategory:</b>{" "}
-                      {
-                        (subcategories[form.parentSlug] || []).find(
-                          (s) => s.slug === form.subcategorySlug
-                        )?.name
+                  {activeStep < steps.length - 1 && (
+                    <Button
+                      variant="contained"
+                      onClick={handleNext}
+                      sx={{
+                        background: "#800000",
+                        color: "#fffaf5",
+                        "&:hover": { background: "#4d0000" }
+                      }}
+                      disabled={
+                        (activeStep === 0 && (!form.name || !form.slug)) ||
+                        (activeStep === 1 &&
+                          (!form.parentSlug ||
+                            !form.subcategorySlug ||
+                            !form.tableStructureSlug)) ||
+                        (activeStep === 2 &&
+                          (columns.length !== form.rowData.length ||
+                            form.rowData.some((row) => !row.row)))
                       }
-                    </Typography>
-                    <Typography>
-                      <b>Table Structure:</b>{" "}
-                      {
-                        tableStructures.find(
-                          (t) => t.slug === form.tableStructureSlug
-                        )?.name
-                      }
-                    </Typography>
-                    <Divider sx={{ my: 1 }} />
-                    <Typography>
-                      <b>Rows:</b>
-                    </Typography>
-                    <ul>
-                      {columns.map((col, idx) => (
-                        <li key={col.name}>
-                          <b>{col.name}:</b> {form.rowData[idx]?.row}{" "}
-                          {form.rowData[idx]?.isLink && (
-                            <span style={{ color: "#1976d2" }}>
-                              [Link: {form.rowData[idx]?.link_type}]
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </Box>
-                </>
-              )}
-              <Stack direction="row" spacing={2} justifyContent="flex-end">
-                {activeStep > 0 && (
-                  <Button variant="outlined" onClick={handleBack}>
-                    Back
-                  </Button>
-                )}
-                {activeStep < steps.length - 1 && (
-                  <Button
-                    variant="contained"
-                    onClick={handleNext}
-                    sx={{
-                      background: "#800000",
-                      color: "#fffaf5",
-                      "&:hover": { background: "#4d0000" }
-                    }}
-                    disabled={
-                      (activeStep === 0 && (!form.name || !form.slug)) ||
-                      (activeStep === 1 &&
-                        (!form.parentSlug ||
-                          !form.subcategorySlug ||
-                          !form.tableStructureSlug)) ||
-                      (activeStep === 2 &&
-                        (columns.length !== form.rowData.length ||
-                          form.rowData.some((row) => !row.row)))
-                    }
-                  >
-                    Next
-                  </Button>
-                )}
-                {activeStep === steps.length - 1 && (
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    sx={{
-                      background: "#800000",
-                      color: "#fffaf5",
-                      "&:hover": { background: "#4d0000" }
-                    }}
-                    startIcon={<AddCircleOutline />}
-                  >
-                    Create Table Post
-                  </Button>
-                )}
+                    >
+                      Next
+                    </Button>
+                  )}
+                  {activeStep === steps.length - 1 && (
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      sx={{
+                        background: "#800000",
+                        color: "#fffaf5",
+                        "&:hover": { background: "#4d0000" }
+                      }}
+                      startIcon={<AddCircleOutline />}
+                      disabled={loading}
+                    >
+                      {loading ? "Creating..." : "Create Table Post"}
+                    </Button>
+                  )}
+                </Stack>
               </Stack>
-            </Stack>
-          </form>
-        </Paper>
+            </form>
+          </Paper>
+        </Fade>
       </Box>
     </Box>
   );

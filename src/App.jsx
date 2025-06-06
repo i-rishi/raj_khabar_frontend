@@ -26,6 +26,7 @@ import { SubcategoryEdit } from "./pages/Subcategory/SubcategoryEdit";
 import { Tablestructure } from "./pages/Tablestructure/Tablestructure";
 import { TableManagement } from "./pages/Tablestructure/TableManagement";
 import { TablePostCreate } from "./pages/Tablestructure/TablePostCreate";
+import { TablePostEdit } from "./pages/Tablestructure/TablePostEdit";
 
 //Card Imports
 import { CardManagement } from "./pages/Cards/CardManagement";
@@ -158,7 +159,7 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     {/* Added for the temporary need to change it. */}
-                    <TablePostCreate />
+                    <TableManagement />
                   </ProtectedRoute>
                 }
               />
@@ -175,6 +176,14 @@ function AppContent() {
                 element={
                   <ProtectedRoute>
                     <TablePostCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/table-post/edit/:id"
+                element={
+                  <ProtectedRoute>
+                    <TablePostEdit />
                   </ProtectedRoute>
                 }
               />
