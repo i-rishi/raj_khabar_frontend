@@ -30,6 +30,8 @@ import { TablePostEdit } from "./pages/Tablestructure/TablePostEdit";
 
 //Card Imports
 import { CardManagement } from "./pages/Cards/CardManagement";
+import { CardCreate } from "./pages/Cards/CardCreate";
+
 import { ToastProvider } from "./context/ToastContext";
 import LoginPage from "./pages/Login/loginPage";
 import Cookies from "js-cookie";
@@ -172,6 +174,14 @@ function AppContent() {
                 }
               />
               <Route
+                path="/card-create"
+                element={
+                  <ProtectedRoute>
+                    <CardCreate />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/TablePostCreate"
                 element={
                   <ProtectedRoute>
@@ -180,7 +190,7 @@ function AppContent() {
                 }
               />
               <Route
-                path="/table-post/edit/:id"
+                path="/table-post/edit/:slug"
                 element={
                   <ProtectedRoute>
                     <TablePostEdit />

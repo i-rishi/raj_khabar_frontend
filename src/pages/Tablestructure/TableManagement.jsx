@@ -277,7 +277,7 @@ export function TableManagement() {
                         <IconButton
                           color="primary"
                           onClick={() =>
-                            navigate(`/table-post/edit/${post._id}`)
+                            navigate(`/table-post/edit/${post.slug}`)
                           }
                         >
                           <Edit />
