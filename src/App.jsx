@@ -31,6 +31,7 @@ import { TablePostEdit } from "./pages/Tablestructure/TablePostEdit";
 //Card Imports
 import { CardManagement } from "./pages/Cards/CardManagement";
 import { CardCreate } from "./pages/Cards/CardCreate";
+import { CardEdit } from "./pages/Cards/CardEdit";
 
 import { ToastProvider } from "./context/ToastContext";
 import LoginPage from "./pages/Login/loginPage";
@@ -162,6 +163,22 @@ function AppContent() {
                   <ProtectedRoute>
                     {/* Added for the temporary need to change it. */}
                     <TableManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/card-management"
+                element={
+                  <ProtectedRoute>
+                    <CardManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/card-edit/:slug"
+                element={
+                  <ProtectedRoute>
+                    <CardEdit />
                   </ProtectedRoute>
                 }
               />

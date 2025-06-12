@@ -27,6 +27,7 @@ import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
 import { useNavigate } from "react-router-dom";
 import { useCategories } from "../../context/CategoryContext";
+import { ConfirmDialog } from "../../components/Dialog/Dialog";
 
 export function TableManagement() {
   const { showToast } = useToast();
@@ -44,6 +45,10 @@ export function TableManagement() {
   // New: category and subcategory filter state
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState("");
+
+  // Dialog state for delete
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
 
   // Load subcategories when category changes
   useEffect(() => {
@@ -84,7 +89,6 @@ export function TableManagement() {
           setTablePosts(data.rowData || []);
         }
         setTotal(data.total || 0);
-        // Optionally, you can use data.table and data.header_component if needed
       } else {
         showToast(data.message || "Failed to fetch table posts", "error");
       }
@@ -94,11 +98,17 @@ export function TableManagement() {
     setLoading(false);
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this table post?"))
-      return;
+  // Open dialog for delete
+  const handleDelete = (id) => {
+    setDeleteId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  // Confirm delete
+  const handleConfirmDelete = async () => {
+    if (!deleteId) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/table-post/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/table/delete-table-post/${deleteId}`, {
         method: "DELETE",
         credentials: "include"
       });
@@ -112,6 +122,14 @@ export function TableManagement() {
     } catch (error) {
       showToast("Error deleting table post", error);
     }
+    setDeleteDialogOpen(false);
+    setDeleteId(null);
+  };
+
+  // Cancel delete
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setDeleteId(null);
   };
 
   return (
@@ -311,6 +329,13 @@ export function TableManagement() {
           rowsPerPageOptions={[5, 10, 25, 50]}
         />
       </Paper>
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="Delete Table Post"
+        content="Are you sure you want to delete this table post? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
     </Box>
   );
 }

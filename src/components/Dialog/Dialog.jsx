@@ -15,13 +15,16 @@ export function ConfirmDialog({ open, title, content, onConfirm, onCancel }) {
       onClose={onCancel}
       BackdropProps={{
         sx: {
-          backgroundColor: "transparent", // subtle maroon tint, adjust as needed
-          backdropFilter: "blur(0.2px)"
+          backgroundColor: "rgba(128,0,0,0.08)", // subtle maroon tint
+          backdropFilter: "blur(0.5px)"
         }
       }}
       PaperProps={{
         sx: {
-          boxShadow: "none" // subtle shadow
+          boxShadow: "0 8px 32px rgba(128,0,0,0.18)", // subtle maroon shadow
+          // border: "2px solid #800000", // maroon border
+          borderRadius: 2,
+          background: "linear-gradient(135deg, #fff 60%, #ffe0e0 100%)"
         }
       }}
     >
