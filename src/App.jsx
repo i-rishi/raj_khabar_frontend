@@ -33,14 +33,29 @@ import { CardManagement } from "./pages/Cards/CardManagement";
 import { CardCreate } from "./pages/Cards/CardCreate";
 import { CardEdit } from "./pages/Cards/CardEdit";
 
+//Setting Imports
+import { Setting } from "./pages/Settings/Setting";
+
+//File Imports
+import { FilesUploader } from "./pages/FilesUploader/FilesUploader";
+
 import { ToastProvider } from "./context/ToastContext";
+import { UserProvider } from "./context/UserContext";
 import LoginPage from "./pages/Login/loginPage";
+import { useUser } from "../src/context/UserContext";
 import Cookies from "js-cookie";
 
 // ProtectedRoute component
 function ProtectedRoute({ children }) {
   const token = Cookies.get("token");
+  const { user } = useUser();
+  console.log("user" + JSON.stringify(user));
+
   if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
   return children;
@@ -58,169 +73,187 @@ function AppContent() {
   const hideLayout = location.pathname === "/login";
 
   return (
-    <div>
-      <CategoryProvider>
-        {!hideLayout && (
-          <Header onMenuClick={toggleDrawer} isDrawerOpen={drawerOpen} />
-        )}
-        <div className="main d-flex">
+    <UserProvider>
+      <div>
+        <CategoryProvider>
           {!hideLayout && (
-            <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+            <Header onMenuClick={toggleDrawer} isDrawerOpen={drawerOpen} />
           )}
+          <div className="main d-flex">
+            {!hideLayout && (
+              <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+            )}
 
-          <div
-            className="content"
-            style={{
-              marginLeft: !hideLayout ? (drawerOpen ? 240 : 60) : 0,
-              transition: "margin-left 0.3s ease"
-            }}
-          >
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/create-post"
-                element={
-                  <ProtectedRoute>
-                    <PostCreate />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/create-category"
-                element={
-                  <ProtectedRoute>
-                    <CategoryCreate />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/posts"
-                element={
-                  <ProtectedRoute>
-                    <PostManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/posts/edit/:id"
-                element={
-                  <ProtectedRoute>
-                    <PostEditPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/category"
-                element={
-                  <ProtectedRoute>
-                    <CategoryManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/category/edit-category/:slug"
-                element={
-                  <ProtectedRoute>
-                    <CategoryEdit />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/category/:parentSlug/subcategory/create"
-                element={
-                  <ProtectedRoute>
-                    <SubcategoryCreate />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/category/:parentSlug/edit-subcategory/:slug"
-                element={
-                  <ProtectedRoute>
-                    <SubcategoryEdit />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/table-structure"
-                element={
-                  <ProtectedRoute>
-                    <Tablestructure />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/table-management"
-                element={
-                  <ProtectedRoute>
-                    {/* Added for the temporary need to change it. */}
-                    <TableManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/card-management"
-                element={
-                  <ProtectedRoute>
-                    <CardManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/card-edit/:slug"
-                element={
-                  <ProtectedRoute>
-                    <CardEdit />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/card-management"
-                element={
-                  <ProtectedRoute>
-                    <CardManagement />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/card-create"
-                element={
-                  <ProtectedRoute>
-                    <CardCreate />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/TablePostCreate"
-                element={
-                  <ProtectedRoute>
-                    <TablePostCreate />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/table-post/edit/:slug"
-                element={
-                  <ProtectedRoute>
-                    <TablePostEdit />
-                  </ProtectedRoute>
-                }
-              />
-              {/* Add more protected routes here */}
-              <Route path="*" element={<Navigate to="/dashboard" />} />
-            </Routes>
+            <div
+              className="content"
+              style={{
+                marginLeft: !hideLayout ? (drawerOpen ? 240 : 60) : 0,
+                transition: "margin-left 0.3s ease"
+              }}
+            >
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/create-post"
+                  element={
+                    <ProtectedRoute>
+                      <PostCreate />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/create-category"
+                  element={
+                    <ProtectedRoute>
+                      <CategoryCreate />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/posts"
+                  element={
+                    <ProtectedRoute>
+                      <PostManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/posts/edit/:id"
+                  element={
+                    <ProtectedRoute>
+                      <PostEditPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/category"
+                  element={
+                    <ProtectedRoute>
+                      <CategoryManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/category/edit-category/:slug"
+                  element={
+                    <ProtectedRoute>
+                      <CategoryEdit />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/category/:parentSlug/subcategory/create"
+                  element={
+                    <ProtectedRoute>
+                      <SubcategoryCreate />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/category/:parentSlug/edit-subcategory/:slug"
+                  element={
+                    <ProtectedRoute>
+                      <SubcategoryEdit />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/table-structure"
+                  element={
+                    <ProtectedRoute>
+                      <Tablestructure />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/table-management"
+                  element={
+                    <ProtectedRoute>
+                      {/* Added for the temporary need to change it. */}
+                      <TableManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/card-management"
+                  element={
+                    <ProtectedRoute>
+                      <CardManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/card-edit/:slug"
+                  element={
+                    <ProtectedRoute>
+                      <CardEdit />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/card-management"
+                  element={
+                    <ProtectedRoute>
+                      <CardManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/card-create"
+                  element={
+                    <ProtectedRoute>
+                      <CardCreate />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/TablePostCreate"
+                  element={
+                    <ProtectedRoute>
+                      <TablePostCreate />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/table-post/edit/:slug"
+                  element={
+                    <ProtectedRoute>
+                      <TablePostEdit />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/files"
+                  element={
+                    <ProtectedRoute>
+                      <FilesUploader />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/Settings"
+                  element={
+                    <ProtectedRoute>
+                      <Setting />
+                    </ProtectedRoute>
+                  }
+                />
+                {/* Add more protected routes here */}
+                <Route path="*" element={<Navigate to="/dashboard" />} />
+              </Routes>
+            </div>
           </div>
-        </div>
-      </CategoryProvider>
-    </div>
+        </CategoryProvider>
+      </div>
+    </UserProvider>
   );
 }
 

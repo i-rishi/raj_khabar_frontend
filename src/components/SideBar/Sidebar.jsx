@@ -16,6 +16,7 @@ import { TbCategoryPlus } from "react-icons/tb";
 import { IoSettingsOutline } from "react-icons/io5";
 import { TbTableOptions, TbTableDashed } from "react-icons/tb";
 import { LuCreditCard } from "react-icons/lu";
+import { GrCloudUpload } from "react-icons/gr";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { useCategories } from "../../context/CategoryContext";
 
@@ -69,6 +70,11 @@ export function Sidebar({ open }) {
       icon: <TbTableOptions />,
       label: "Table Structure",
       path: "/table-structure"
+    },
+    {
+      icon: <GrCloudUpload />,
+      label: "File Uploader",
+      path: "/files"
     },
     { icon: <IoSettingsOutline />, label: "Settings", path: "/settings" }
   ];

@@ -3,6 +3,7 @@ import { Box, TextField, Button, Typography, Paper } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import rajkhabar from "../../assets/images/rajkhabar.png";
 import Cookies from "js-cookie";
+import { useUser } from "../../context/UserContext";
 import { API_BASE_URL } from "../../config";
 
 export default function LoginPage() {
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { setUser } = useUser();
 
   // const baseUrl = import.meta.env.VITE_BASE_URL;
 
@@ -24,6 +26,8 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password })
       });
       const result = await response.json();
+      console.log("Login result:", result);
+      setUser(result.user);
       if (result.success && result.token) {
         // Store token as a session cookie (expires when browser closes)
         Cookies.set("token", result.token, { sameSite: "strict" });

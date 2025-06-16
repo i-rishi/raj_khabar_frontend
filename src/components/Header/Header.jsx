@@ -1,17 +1,15 @@
 /* eslint-disable no-unused-vars */
 import { Link } from "react-router-dom";
 import Button from "@mui/material/Button";
-import {
-  MdOutlineMenuOpen,
-  MdOutlineMenu,
-  MdOutlineLightMode,
-  MdOutlineDarkMode
-} from "react-icons/md";
+import { MdOutlineMenuOpen, MdOutlineMenu } from "react-icons/md";
 import { SearchBox } from "../SearchBox/SearchBox";
 import { Box } from "@mui/material";
 import logo from "../../assets/images/rajkhabar.png";
+import { API_BASE_URL } from "../../config";
 
 import { useState } from "react";
+import { useUser } from "../../context/UserContext";
+import { useNavigate } from "react-router-dom";
 
 //imports for menu
 import Avatar from "@mui/material/Avatar";
@@ -23,9 +21,14 @@ import Settings from "@mui/icons-material/Settings";
 import Logout from "@mui/icons-material/Logout";
 
 export function Header({ onMenuClick, isDrawerOpen }) {
-  const userProfile = "https://shorturl.at/8WzQY";
-  const userName = "Rishi Sharma";
-  const userRole = "Admin";
+  const Navigate = useNavigate();
+  const { user, setUser } = useUser();
+  console.log(JSON.stringify(user));
+  user == "null" ? Navigate("/login") : user;
+  const userProfile =
+    user.profilePhoto != "" ? user.profilePhoto : "https://shorturl.at/8WzQY";
+  const userName = user.firstName + " " + user.lastName;
+  const userRole = user.role ? user.role : "Admin";
 
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -34,6 +37,20 @@ export function Header({ onMenuClick, isDrawerOpen }) {
   };
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    fetch(`${API_BASE_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include"
+    });
+    handleClose();
+    setUser(null);
+    Navigate("/login");
+  };
+
+  const handleSetting = () => {
+    Navigate("/Settings");
   };
 
   return (
@@ -121,13 +138,13 @@ export function Header({ onMenuClick, isDrawerOpen }) {
                       }}
                     />
                   </Box>
-                  <MenuItem onClick={handleClose}>
+                  <MenuItem onClick={handleSetting}>
                     <ListItemIcon>
                       <Settings fontSize="small" />
                     </ListItemIcon>
                     Settings
                   </MenuItem>
-                  <MenuItem onClick={handleClose}>
+                  <MenuItem onClick={handleLogout}>
                     <ListItemIcon>
                       <Logout fontSize="small" />
                     </ListItemIcon>
