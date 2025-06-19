@@ -23,12 +23,8 @@ import Logout from "@mui/icons-material/Logout";
 export function Header({ onMenuClick, isDrawerOpen }) {
   const Navigate = useNavigate();
   const { user, setUser } = useUser();
-  console.log(JSON.stringify(user));
-  user == "null" ? Navigate("/login") : user;
-  const userProfile =
-    user.profilePhoto != "" ? user.profilePhoto : "https://shorturl.at/8WzQY";
-  const userName = user.firstName + " " + user.lastName;
-  const userRole = user.role ? user.role : "Admin";
+  const userName = user?.firstName + " " + user?.lastName;
+  const userRole = user?.role ? user.role : "Admin";
 
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -81,7 +77,7 @@ export function Header({ onMenuClick, isDrawerOpen }) {
                 >
                   <div className="userImg">
                     <span className="rounded-circle">
-                      <img src={userProfile} alt="User" />
+                      <img src={user?.profilePhoto} alt="User" />
                     </span>
                   </div>
                   <div className="userInfo ">
@@ -128,7 +124,7 @@ export function Header({ onMenuClick, isDrawerOpen }) {
                   anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
                 >
                   <MenuItem onClick={handleClose}>
-                    <Avatar src={userProfile} /> Profile
+                    <Avatar src={user?.profilePhoto} /> Profile
                   </MenuItem>
                   <Box display="flex" justifyContent="center">
                     <Divider

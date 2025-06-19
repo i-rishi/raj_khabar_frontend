@@ -34,7 +34,13 @@ import { CardCreate } from "./pages/Cards/CardCreate";
 import { CardEdit } from "./pages/Cards/CardEdit";
 
 //Setting Imports
-import { Setting } from "./pages/Settings/Setting";
+import {
+  Setting,
+  SettingsPage,
+  ProfileSection,
+  SecuritySection,
+  PreferencesSection
+} from "./pages/Settings/Setting";
 
 //File Imports
 import { FilesUploader } from "./pages/FilesUploader/FilesUploader";
@@ -43,16 +49,15 @@ import { ToastProvider } from "./context/ToastContext";
 import { UserProvider } from "./context/UserContext";
 import LoginPage from "./pages/Login/loginPage";
 import { useUser } from "../src/context/UserContext";
+import { SplashScreen } from "./pages/SplashScreen/SplashScreen";
 import Cookies from "js-cookie";
 
 // ProtectedRoute component
 function ProtectedRoute({ children }) {
-  const token = Cookies.get("token");
   const { user } = useUser();
-  console.log("user" + JSON.stringify(user));
-
-  if (!token) {
-    return <Navigate to="/login" replace />;
+  if (user === undefined) {
+    // Show a loading spinner or splash screen while user is loading
+    return <SplashScreen />;
   }
 
   if (!user) {
@@ -244,6 +249,7 @@ function AppContent() {
                   element={
                     <ProtectedRoute>
                       <Setting />
+                      <SettingsPage />
                     </ProtectedRoute>
                   }
                 />
