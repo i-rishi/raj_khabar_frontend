@@ -75,7 +75,8 @@ function AppContent() {
   };
 
   // Hide header/sidebar on login page
-  const hideLayout = location.pathname === "/login";
+  const hideLayout =
+    location.pathname === "/login" || location.pathname === "/";
 
   return (
     <UserProvider>
