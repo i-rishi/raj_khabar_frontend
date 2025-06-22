@@ -34,13 +34,9 @@ import { CardCreate } from "./pages/Cards/CardCreate";
 import { CardEdit } from "./pages/Cards/CardEdit";
 
 //Setting Imports
-import {
-  Setting,
-  SettingsPage,
-  ProfileSection,
-  SecuritySection,
-  PreferencesSection
-} from "./pages/Settings/Setting";
+import { Setting, SettingsPage } from "./pages/Settings/Setting";
+import { UserManagement } from "./pages/Settings/UserManagement";
+import { AddUser } from "./pages/Settings/AddUser";
 
 //File Imports
 import { FilesUploader } from "./pages/FilesUploader/FilesUploader";
@@ -249,8 +245,23 @@ function AppContent() {
                   path="/Settings"
                   element={
                     <ProtectedRoute>
-                      <Setting />
                       <SettingsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/add-user"
+                  element={
+                    <ProtectedRoute>
+                      <AddUser />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/user-management"
+                  element={
+                    <ProtectedRoute>
+                      <UserManagement />
                     </ProtectedRoute>
                   }
                 />

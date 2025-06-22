@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -13,6 +13,8 @@ import {
   TextField,
   Switch,
   FormControlLabel,
+  Select,
+  MenuItem,
   IconButton,
   List,
   ListItem,
@@ -30,13 +32,16 @@ import {
   Palette,
   Notifications
 } from "@mui/icons-material";
+import { API_BASE_URL } from "../../config";
 import { useUser } from "../../context/UserContext";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "../../context/ToastContext";
 
 const themeColor = "#800000";
 const lightBg = "#fff6f6";
 
 export function Setting() {
-  const { users } = useUser();
+  const navigate = useNavigate();
 
   return (
     <Box>
@@ -46,52 +51,32 @@ export function Setting() {
         justifyContent="space-between"
         mb={2}
       >
-        <Typography variant="h6" sx={{ color: themeColor, fontWeight: 700 }}>
-          User Management
-        </Typography>
-        <Button
-          startIcon={<Add />}
-          variant="contained"
-          sx={{ background: themeColor }}
-        >
-          Add User
-        </Button>
-      </Stack>
-      <List>
-        {/* {users.map((user) => (
-          <ListItem
-            key={user.id}
-            sx={{ borderRadius: 2, mb: 1, background: "#fff" }}
+        <Stack direction="row" spacing={2} mb={2} alignItems="center">
+          <Button
+            startIcon={<Add />}
+            variant="contained"
+            onClick={() => navigate("/add-user")}
+            sx={{ background: themeColor, mt: 1 }} // mt: 1 brings it a bit down
           >
-            <ListItemAvatar>
-              <Avatar src={user.avatar}>{user.name[0]}</Avatar>
-            </ListItemAvatar>
-            <ListItemText
-              primary={user.name}
-              secondary={`${user.email} • ${user.role}`}
-              primaryTypographyProps={{ fontWeight: 600, color: themeColor }}
-            />
-            <ListItemSecondaryAction>
-              <Tooltip title="Edit">
-                <IconButton color="primary">
-                  <Edit />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Delete">
-                <IconButton color="error">
-                  <Delete />
-                </IconButton>
-              </Tooltip>
-            </ListItemSecondaryAction>
-          </ListItem>
-        ))} */}
-      </List>
+            Add User
+          </Button>
+          <Button
+            variant="outlined"
+            sx={{ color: themeColor, borderColor: themeColor, mt: 1 }}
+            onClick={() => navigate("/user-management")}
+          >
+            Manage Users
+          </Button>
+        </Stack>
+      </Stack>
     </Box>
   );
 }
 
 export function ProfileSection({ user }) {
   const [editMode, setEditMode] = useState(false);
+  const { showToast } = useToast();
+  const { setUser } = useUser();
   const [profile, setProfile] = useState({
     name: user?.firstName || "",
     lname: user?.lastName || "",
@@ -99,11 +84,39 @@ export function ProfileSection({ user }) {
     photo: user?.profilePhoto || "",
     role: user?.role || "User"
   });
-
-  console.log("Profile Section Rendered", profile);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) =>
     setProfile({ ...profile, [e.target.name]: e.target.value });
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("firstName", profile.name);
+      formData.append("lastName", profile.lname);
+      formData.append("email", profile.email);
+      if (profile.photoFile) formData.append("file", profile.photoFile);
+
+      const res = await fetch(`${API_BASE_URL}/api/auth/update-profile`, {
+        method: "PUT",
+        credentials: "include",
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        setEditMode(false);
+        if (data.user) setUser(data.user);
+        showToast("Profile updated successfully", "success");
+      } else {
+        showToast(data.message || "Failed to update profile", "error");
+      }
+    } catch (error) {
+      showToast("Error updating profile", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Box>
@@ -139,6 +152,7 @@ export function ProfileSection({ user }) {
           </Typography>
           <Button
             variant="outlined"
+            disabled={!editMode}
             sx={{
               color: themeColor,
               borderColor: themeColor,
@@ -152,15 +166,15 @@ export function ProfileSection({ user }) {
       </Stack>
       <Stack spacing={2} maxWidth={400}>
         <TextField
-          label="Name"
+          label="First Name"
           name="name"
           value={profile.name}
           onChange={handleChange}
           disabled={!editMode}
         />
         <TextField
-          label="Name"
-          name="name"
+          label="Last Name"
+          name="lname"
           value={profile.lname}
           onChange={handleChange}
           disabled={!editMode}
@@ -179,9 +193,10 @@ export function ProfileSection({ user }) {
             color: editMode ? "#fff" : themeColor,
             borderColor: themeColor
           }}
-          onClick={() => setEditMode((v) => !v)}
+          onClick={editMode ? handleSave : () => setEditMode(true)}
+          disabled={loading}
         >
-          {editMode ? "Save" : "Edit Profile"}
+          {loading ? "Saving..." : editMode ? "Save" : "Edit Profile"}
         </Button>
       </Stack>
     </Box>
@@ -315,6 +330,7 @@ export function SettingsPage() {
         >
           Settings
         </Typography>
+        <Setting />
         <Tabs
           value={tab}
           onChange={(_, v) => setTab(v)}
@@ -329,13 +345,11 @@ export function SettingsPage() {
           <Tab label="Profile" />
           <Tab label="Security" />
           <Tab label="Preferences" />
-          <Tab label="User Management" />
         </Tabs>
         <Divider sx={{ mb: 4 }} />
         {tab === 0 && <ProfileSection user={user} />}
         {tab === 1 && <SecuritySection />}
         {tab === 2 && <PreferencesSection />}
-        {tab === 3 && <UserManagementSection />}
       </Paper>
     </Box>
   );

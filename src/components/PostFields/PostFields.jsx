@@ -59,6 +59,19 @@ export function PostFields({ register, errors, watch, setValue }) {
     if (Array.isArray(formTags)) setTags(formTags);
   }, [watch("tags")]);
 
+  const handleTitleChange = (e) => {
+    const name = e.target.value;
+    setValue("title", name);
+    // Generate slug from title
+    const slug = name
+      .toLowerCase()
+      .replace(/\s+/g, "_")
+      .replace(/[^a-z0-9_]/g, "")
+      .replace(/_+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    setValue("slug", slug);
+  };
+
   return (
     <Grid container spacing={2}>
       {/* Title */}
@@ -73,6 +86,7 @@ export function PostFields({ register, errors, watch, setValue }) {
           helperText={errors.title?.message}
           sx={textfieldStyle}
           value={watch("title") ?? ""}
+          onChange={handleTitleChange}
         />
       </Grid>
 
