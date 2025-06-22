@@ -35,7 +35,7 @@ import { useUser } from "../../context/UserContext";
 const themeColor = "#800000";
 const lightBg = "#fff6f6";
 
- export function Setting() {
+export function Setting() {
   const { users } = useUser();
 
   return (
@@ -93,10 +93,14 @@ const lightBg = "#fff6f6";
 export function ProfileSection({ user }) {
   const [editMode, setEditMode] = useState(false);
   const [profile, setProfile] = useState({
-    name: user?.name || "",
+    name: user?.firstName || "",
+    lname: user?.lastName || "",
     email: user?.email || "",
-    photo: user?.profilePhoto || ""
+    photo: user?.profilePhoto || "",
+    role: user?.role || "User"
   });
+
+  console.log("Profile Section Rendered", profile);
 
   const handleChange = (e) =>
     setProfile({ ...profile, [e.target.name]: e.target.value });
@@ -114,18 +118,50 @@ export function ProfileSection({ user }) {
           src={profile.photo}
           sx={{ width: 72, height: 72, border: `2px solid ${themeColor}` }}
         />
-        <Button
-          variant="outlined"
-          sx={{ color: themeColor, borderColor: themeColor }}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center"
+          }}
         >
-          Change Photo
-        </Button>
+          <Typography
+            variant="h6"
+            sx={{ color: themeColor, fontWeight: 400, mb: 0.5 }}
+          >
+            {profile.name || "Your Name"}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: themeColor, fontWeight: 400, mb: 0.5 }}
+          >
+            {profile.role || "User"}
+          </Typography>
+          <Button
+            variant="outlined"
+            sx={{
+              color: themeColor,
+              borderColor: themeColor,
+              mt: 1,
+              alignSelf: "flex-start"
+            }}
+          >
+            Change Photo
+          </Button>
+        </Box>
       </Stack>
       <Stack spacing={2} maxWidth={400}>
         <TextField
           label="Name"
           name="name"
           value={profile.name}
+          onChange={handleChange}
+          disabled={!editMode}
+        />
+        <TextField
+          label="Name"
+          name="name"
+          value={profile.lname}
           onChange={handleChange}
           disabled={!editMode}
         />

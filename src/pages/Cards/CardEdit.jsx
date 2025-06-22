@@ -27,7 +27,7 @@ export function CardEdit() {
     topField: "",
     cardHeading: "",
     middleField: "",
-    downloadLink: { link: "", link_type: "external" },
+    link: { link: "", link_type: "external" },
     parentSlug: "",
     subCategorySlug: ""
   });
@@ -58,10 +58,7 @@ export function CardEdit() {
             topField: data.data.topField || "",
             cardHeading: data.data.cardHeading || "",
             middleField: data.data.middleField || "",
-            downloadLink: data.data.downloadLink || {
-              link: "",
-              link_type: "external"
-            },
+            link: data.data.link || { link: "", link_type: "external" }, // <-- use link, not downloadLink
             parentSlug: data.data.parentSlug || "",
             subCategorySlug: data.data.subCategorySlug || ""
           });
@@ -110,8 +107,8 @@ export function CardEdit() {
     if (name === "link" || name === "link_type") {
       setForm((prev) => ({
         ...prev,
-        downloadLink: {
-          ...prev.downloadLink,
+        link: {
+          ...prev.link,
           [name === "link" ? "link" : "link_type"]: value
         }
       }));
@@ -127,6 +124,7 @@ export function CardEdit() {
     e.preventDefault();
     setUpdating(true);
     try {
+      // Send the nested link object as required by your schema
       const res = await fetch(`${API_BASE_URL}/api/card/update/${slug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -292,7 +290,7 @@ export function CardEdit() {
               <TextField
                 label="Download Link"
                 name="link"
-                value={form.downloadLink.link}
+                value={form.link.link}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -309,13 +307,16 @@ export function CardEdit() {
                 <InputLabel>Link Type</InputLabel>
                 <Select
                   name="link_type"
-                  value={form.downloadLink.link_type}
+                  value={form.link.link_type}
                   label="Link Type"
                   onChange={handleChange}
                   sx={{ background: "#fff" }}
                 >
                   <MenuItem value="external">External</MenuItem>
                   <MenuItem value="internal">Internal</MenuItem>
+                  <MenuItem value="internal">Internal</MenuItem>
+                  <MenuItem value="pdf">PDF</MenuItem>
+                  <MenuItem value="web-view">Web View</MenuItem>
                 </Select>
               </FormControl>
             </Stack>

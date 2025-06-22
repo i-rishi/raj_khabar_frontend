@@ -26,7 +26,7 @@ export function CardCreate() {
     topField: "",
     cardHeading: "",
     middleField: "",
-    downloadLink: { link: "", link_type: "external" },
+    link: { link: "", link_type: "external" }, // <-- update downloadLink to link
     parentSlug: "",
     subCategorySlug: ""
   });
@@ -66,9 +66,9 @@ export function CardCreate() {
     if (name === "link" || name === "link_type") {
       setForm((prev) => ({
         ...prev,
-        downloadLink: {
-          ...prev.downloadLink,
-          [name === "link" ? "link" : "link_type"]: value
+        link: {
+          ...prev.link,
+          [name]: value
         }
       }));
     } else {
@@ -233,7 +233,7 @@ export function CardCreate() {
               <TextField
                 label="Download Link"
                 name="link"
-                value={form.downloadLink.link}
+                value={form.link.link}
                 onChange={handleChange}
                 fullWidth
                 variant="outlined"
@@ -250,13 +250,15 @@ export function CardCreate() {
                 <InputLabel>Link Type</InputLabel>
                 <Select
                   name="link_type"
-                  value={form.downloadLink.link_type}
+                  value={form.link.link_type}
                   label="Link Type"
                   onChange={handleChange}
                   sx={{ background: "#fff" }}
                 >
                   <MenuItem value="external">External</MenuItem>
                   <MenuItem value="internal">Internal</MenuItem>
+                  <MenuItem value="pdf">PDF</MenuItem>
+                  <MenuItem value="web-view">Web View</MenuItem>
                 </Select>
               </FormControl>
             </Stack>

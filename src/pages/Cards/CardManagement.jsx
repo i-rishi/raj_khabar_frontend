@@ -205,9 +205,9 @@ export function CardManagement() {
                     <Typography sx={{ color: "#333", mb: 1 }}>
                       {card.middleField}
                     </Typography>
-                    {card.downloadLink && card.downloadLink.link && (
+                    {card.link && card.link.link && (
                       <MuiLink
-                        href={card.downloadLink.link}
+                        href={card.link.link}
                         target="_blank"
                         rel="noopener noreferrer"
                         underline="none"
@@ -225,7 +225,7 @@ export function CardManagement() {
                       >
                         <Download sx={{ mr: 0.5 }} fontSize="small" />
                         Download
-                        {card.downloadLink.link_type === "external" && (
+                        {card.link.link_type === "external" && (
                           <OpenInNew sx={{ ml: 0.5 }} fontSize="small" />
                         )}
                       </MuiLink>
