@@ -84,8 +84,8 @@ export function Sidebar({ open }) {
     const newOpenSubmenus = {};
     menuItems.forEach((item) => {
       if (item.children) {
-        const isChildActive = item.children.some(
-          (child) => currentPath === child.path
+        const isChildActive = item.children.some((child) =>
+          currentPath.startsWith(child.path)
         );
         newOpenSubmenus[item.label] = isChildActive;
       }
@@ -184,7 +184,6 @@ export function Sidebar({ open }) {
                     {item.children.map((child, idx) => (
                       <ListItem
                         key={idx}
-                        button
                         component={Link}
                         to={child.path}
                         selected={currentPath === child.path}

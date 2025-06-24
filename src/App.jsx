@@ -19,6 +19,7 @@ import { CategoryManagement } from "./pages/Category/CategoryManagement";
 import { CategoryCreate } from "./pages/Category/CategoryCreate";
 import { CategoryEdit } from "./pages/Category/CategoryEdit";
 import { CategoryProvider } from "./context/CategoryContext";
+import { MainCategoryAllData } from "./pages/Category/MainCategoryAllData";
 //subcategory imports
 import { SubcategoryCreate } from "./pages/Subcategory/SubcategoryCreate";
 import { SubcategoryEdit } from "./pages/Subcategory/SubcategoryEdit";
@@ -133,6 +134,14 @@ function AppContent() {
                   element={
                     <ProtectedRoute>
                       <PostEditPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/main-category/:slug"
+                  element={
+                    <ProtectedRoute>
+                      <MainCategoryAllData />
                     </ProtectedRoute>
                   }
                 />
