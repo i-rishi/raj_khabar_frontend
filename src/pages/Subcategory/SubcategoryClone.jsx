@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Paper,
@@ -14,13 +14,15 @@ import { useForm, Controller } from "react-hook-form";
 import { Add as AddIcon } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
-import { useNavigate, useParams } from "react-router-dom";
+import { useCategories } from "../../context/CategoryContext";
+import { useParams, useNavigate } from "react-router-dom";
 
-export function SubcategoryCreate() {
+export function SubcategoryClone() {
   const { showToast } = useToast();
+  const { categories } = useCategories();
+  const { parentSlug, slug } = useParams();
   const navigate = useNavigate();
-  const { parentSlug } = useParams();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Table structures state
   const [tableStructures, setTableStructures] = useState([]);
@@ -45,39 +47,57 @@ export function SubcategoryCreate() {
     register,
     handleSubmit,
     control,
-    setValue,
-    formState: { errors },
+    reset,
     watch,
+    formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
       name: "",
       slug: "",
       description: "",
       type: "",
-      parentSlug: parentSlug || "",
+      parentSlug: "",
       tableStructureSlug: "",
     },
   });
 
+  // Fetch subcategory details
+  useEffect(() => {
+    setLoading(true);
+    fetch(
+      `${API_BASE_URL}/api/category/${parentSlug}/get-sub-category/${slug}`,
+      {
+        credentials: "include",
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.subcategory) {
+          reset({
+            name: data.subcategory.name,
+            slug: data.subcategory.slug,
+            description: data.subcategory.description,
+            type: data.subcategory.type,
+            parentSlug: data.subcategory.parentSlug,
+            tableStructureSlug: data.subcategory.tableStructureSlug || "",
+          });
+        } else {
+          showToast("Subcategory not found", "error");
+          navigate("/category");
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        showToast("Failed to fetch subcategory", "error");
+        setLoading(false);
+        navigate("/category");
+      });
+    // eslint-disable-next-line
+  }, [slug]);
+
   const selectedType = watch("type");
 
-  // Slug auto-format
-  const handleNameChange = (e) => {
-    const name = e.target.value;
-    setValue("name", name);
-    setValue(
-      "slug",
-      name
-        .toLowerCase()
-        .replace(/\s+/g, "_")
-        .replace(/[^a-z0-9_]/g, "")
-        .replace(/_+/g, "_")
-        .replace(/^_+|_+$/g, "")
-    );
-  };
-
   const onSubmit = async (data) => {
-    setIsSubmitting(true);
     try {
       const res = await fetch(
         `${API_BASE_URL}/api/category/create-sub-category`,
@@ -90,16 +110,23 @@ export function SubcategoryCreate() {
       );
       const result = await res.json();
       if (result.success) {
-        showToast("Subcategory created successfully!", "success");
+        showToast("Subcategory updated successfully!", "success");
         navigate("/category");
       } else {
-        showToast(result.message || "Failed to create subcategory.", "error");
+        showToast(result.message || "Failed to update subcategory.", "error");
       }
     } catch (error) {
-      showToast("Error creating subcategory.", error);
+      showToast("Error updating subcategory.", error);
     }
-    setIsSubmitting(false);
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 8 }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -115,9 +142,9 @@ export function SubcategoryCreate() {
       <Paper
         elevation={4}
         sx={{
-          p: { xs: 2, sm: 4 },
+          p: 4,
           borderRadius: 4,
-          minWidth: { xs: "90vw", sm: 400 },
+          minWidth: 400,
           maxWidth: 480,
           boxShadow: "0 8px 32px rgba(128,0,0,0.15)",
         }}
@@ -133,7 +160,7 @@ export function SubcategoryCreate() {
           }}
         >
           <AddIcon sx={{ verticalAlign: "middle", mr: 1 }} />
-          Create Subcategory
+          Edit Subcategory
         </Typography>
         <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
           <Stack spacing={2}>
@@ -145,7 +172,6 @@ export function SubcategoryCreate() {
               fullWidth
               variant="outlined"
               sx={{ background: "#fff" }}
-              onChange={handleNameChange}
             />
             <TextField
               label="Slug"
@@ -192,18 +218,34 @@ export function SubcategoryCreate() {
                 </Select>
               )}
             />
-            <TextField
-              label="Parent Category"
-              value={parentSlug}
-              fullWidth
-              variant="outlined"
-              sx={{ background: "#fff" }}
-              disabled
+            <Controller
+              name="parentSlug"
+              control={control}
+              rules={{ required: "Parent Category is required" }}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  fullWidth
+                  variant="outlined"
+                  sx={{ background: "#fff" }}
+                  error={!!errors.parentSlug}
+                  displayEmpty
+                >
+                  <MenuItem value="">
+                    <em>Select Parent Category</em>
+                  </MenuItem>
+                  {categories.map((cat) => (
+                    <MenuItem key={cat.slug} value={cat.slug}>
+                      {cat.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              )}
             />
             <input
               type="hidden"
               {...register("parentSlug")}
-              value={parentSlug}
+              value={watch("parentSlug")}
             />
             <Controller
               name="tableStructureSlug"
@@ -246,7 +288,7 @@ export function SubcategoryCreate() {
               disabled={isSubmitting}
               startIcon={<AddIcon />}
             >
-              {isSubmitting ? "Creating..." : "Create Subcategory"}
+              {isSubmitting ? "Adding..." : "Add Subcategory"}
             </Button>
           </Stack>
         </form>

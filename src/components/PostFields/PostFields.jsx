@@ -7,16 +7,17 @@ import {
   Checkbox,
   Chip,
   Box,
-  IconButton
+  IconButton,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useCategories } from "../../context/CategoryContext";
 import TiptapEditor from "../TiptapEditor/TiptapEditor";
 
-export function PostFields({ register, errors, watch, setValue }) {
+export function PostFields({ register, errors, watch, setValue, post }) {
   const { categories, subcategories, loadSubcategories } = useCategories();
   const [editorContent, setEditorContent] = useState(null);
   const selectedCategory = watch("categoryslug") || "";
+  const [imageRemoved, setImageRemoved] = useState(false);
 
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
@@ -25,7 +26,7 @@ export function PostFields({ register, errors, watch, setValue }) {
     setEditorContent(json);
     setValue("content", json); // register it in react-hook-form
   };
-
+  console.log("PostFields component rendered with post:", post);
   const handleTagKeyDown = (e) => {
     if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
       e.preventDefault();
@@ -46,6 +47,7 @@ export function PostFields({ register, errors, watch, setValue }) {
 
   const handleRemoveImage = () => {
     setValue("image", null);
+    setImageRemoved(true);
   };
 
   useEffect(() => {
@@ -123,10 +125,10 @@ export function PostFields({ register, errors, watch, setValue }) {
                 sx: {
                   backgroundColor: "#fffaf5",
                   color: "#4d0000",
-                  border: "1px solid #800000"
-                }
-              }
-            }
+                  border: "1px solid #800000",
+                },
+              },
+            },
           }}
         >
           <MenuItem value="draft">Draft</MenuItem>
@@ -152,10 +154,10 @@ export function PostFields({ register, errors, watch, setValue }) {
                 sx: {
                   backgroundColor: "#fffaf5",
                   color: "#4d0000",
-                  border: "1px solid #800000"
-                }
-              }
-            }
+                  border: "1px solid #800000",
+                },
+              },
+            },
           }}
         >
           {categories.map((cat) => (
@@ -175,7 +177,7 @@ export function PostFields({ register, errors, watch, setValue }) {
             fullWidth
             size="small"
             {...register("subcategoryslug", {
-              required: "Subcategory is required"
+              required: "Subcategory is required",
             })}
             error={!!errors.subcategory}
             helperText={errors.subcategory?.message}
@@ -187,10 +189,10 @@ export function PostFields({ register, errors, watch, setValue }) {
                   sx: {
                     backgroundColor: "#fffaf5",
                     color: "#4d0000",
-                    border: "1px solid #800000"
-                  }
-                }
-              }
+                    border: "1px solid #800000",
+                  },
+                },
+              },
             }}
           >
             {(subcategories[selectedCategory] || []).map((sub) => (
@@ -249,7 +251,7 @@ export function PostFields({ register, errors, watch, setValue }) {
             display: "block",
             marginBottom: "8px",
             color: "#800000",
-            fontWeight: 500
+            fontWeight: 500,
           }}
         >
           Upload Image
@@ -266,7 +268,7 @@ export function PostFields({ register, errors, watch, setValue }) {
           style={{ marginBottom: "8px" }}
         />
         {/* Preview */}
-        {watch("image") && (
+        {watch("image") ? (
           <Box sx={{ mt: 1, position: "relative", display: "inline-block" }}>
             <img
               src={URL.createObjectURL(watch("image"))}
@@ -275,7 +277,7 @@ export function PostFields({ register, errors, watch, setValue }) {
                 maxWidth: "100%",
                 maxHeight: 200,
                 borderRadius: 8,
-                border: "1px solid #800000"
+                border: "1px solid #800000",
               }}
             />
             <IconButton
@@ -290,13 +292,43 @@ export function PostFields({ register, errors, watch, setValue }) {
                 borderRadius: "50%",
                 p: 0.5,
                 zIndex: 2,
-                "&:hover": { background: "#ffe0e0" }
+                "&:hover": { background: "#ffe0e0" },
               }}
             >
               <CloseIcon fontSize="small" sx={{ color: "#800000" }} />
             </IconButton>
           </Box>
-        )}
+        ) : post?.imageUrl && !imageRemoved ? (
+          <Box sx={{ mt: 1, position: "relative", display: "inline-block" }}>
+            <img
+              src={post.imageUrl}
+              alt="Preview"
+              style={{
+                maxWidth: "100%",
+                maxHeight: 200,
+                borderRadius: 8,
+                border: "1px solid #800000",
+              }}
+            />
+            <IconButton
+              size="small"
+              onClick={handleRemoveImage}
+              sx={{
+                position: "absolute",
+                top: 4,
+                right: 4,
+                background: "#fff",
+                border: "1px solid #800000",
+                borderRadius: "50%",
+                p: 0.5,
+                zIndex: 2,
+                "&:hover": { background: "#ffe0e0" },
+              }}
+            >
+              <CloseIcon fontSize="small" sx={{ color: "#800000" }} />
+            </IconButton>
+          </Box>
+        ) : null}
       </Grid>
       {/* Type */}
       <input type="hidden" value="post" {...register("type")} />
@@ -307,7 +339,7 @@ export function PostFields({ register, errors, watch, setValue }) {
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            marginTop: "8px"
+            marginTop: "8px",
           }}
         >
           Is Visible in Carousel
@@ -316,8 +348,8 @@ export function PostFields({ register, errors, watch, setValue }) {
             sx={{
               color: "#800000",
               "&.Mui-checked": {
-                color: "#800000"
-              }
+                color: "#800000",
+              },
             }}
             checked={!!watch("isVisibleInCarousel")}
           />
@@ -330,7 +362,7 @@ export function PostFields({ register, errors, watch, setValue }) {
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            marginTop: "8px"
+            marginTop: "8px",
           }}
         >
           Show Ad on Links
@@ -339,8 +371,8 @@ export function PostFields({ register, errors, watch, setValue }) {
             sx={{
               color: "#800000",
               "&.Mui-checked": {
-                color: "#800000"
-              }
+                color: "#800000",
+              },
             }}
             checked={!!watch("showAdOnLinks")}
           />
@@ -348,7 +380,10 @@ export function PostFields({ register, errors, watch, setValue }) {
       </Grid>
       {/* Editor */}
       <Grid size={12}>
-        <TiptapEditor onChange={handleEditorChange} />
+        <TiptapEditor
+          onChange={handleEditorChange}
+          initialContent={watch("content")}
+        />
         <input
           type="hidden"
           {...register("content", { required: "Content is required" })}
@@ -367,16 +402,16 @@ const textfieldStyle = {
   backgroundColor: "#fffaf5", // Updated background to beige tone
   "& .MuiOutlinedInput-root": {
     "& fieldset": {
-      borderColor: "#800000"
+      borderColor: "#800000",
     },
     "&:hover fieldset": {
-      borderColor: "#800000"
+      borderColor: "#800000",
     },
     "&.Mui-focused fieldset": {
-      borderColor: "#800000"
-    }
+      borderColor: "#800000",
+    },
   },
   "& .MuiInputBase-input": {
-    padding: "10px"
-  }
+    padding: "10px",
+  },
 };

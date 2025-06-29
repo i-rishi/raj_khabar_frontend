@@ -14,7 +14,7 @@ import {
   Chip,
   CircularProgress
 } from "@mui/material";
-import { Add as AddIcon, ExpandMore, Edit, Delete } from "@mui/icons-material";
+import { Add as AddIcon, ExpandMore, Edit, Delete, ContentCopy } from "@mui/icons-material";
 import { ConfirmDialog } from "../../components/Dialog/Dialog";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
@@ -270,6 +270,17 @@ export function CategoryManagement() {
                       <Typography sx={{ flex: 1, color: "#800000" }}>
                         {sub.name}
                       </Typography>
+                      <IconButton
+                      size="small"
+                      sx={{ color: "#800000", mr: 1 }}
+                      onClick={() =>
+                        navigate(
+                          `/category/${category.slug}/clone-subcategory/${sub.slug}`
+                        )
+                      }
+                    >
+                      <ContentCopy fontSize="small" />
+                    </IconButton>
                       <IconButton
                         size="small"
                         sx={{ color: "#800000", mr: 1 }}

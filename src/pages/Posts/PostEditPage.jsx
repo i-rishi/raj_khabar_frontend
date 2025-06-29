@@ -25,7 +25,7 @@ export function PostEditPage() {
     control,
     formState: { errors },
     setValue,
-    reset
+    reset,
   } = methods;
 
   const [selectedCategory, setSelectedCategory] = useState(
@@ -44,34 +44,46 @@ export function PostEditPage() {
       setLoading(true);
       try {
         const res = await fetch(`${API_BASE_URL}/api/post/posts/id/${id}`, {
-          credentials: "include"
+          credentials: "include",
         });
         const data = await res.json();
         if (data.success) {
           setPost(data.post);
+          console.log("Fetched post data:", data.post);
+          let content = data.post.content;
+          if (typeof content === "string") {
+            try {
+              content = JSON.parse(content);
+            } catch (e) {
+              // If parsing fails, keep it as string or handle error
+              console.error("Failed to parse content JSON:", e);
+            }
+          }
           // Call reset here with the correct field mapping
           reset({
             title: data.post.title || "",
             slug: data.post.slug || "",
-            content: data.post.content || "",
+            content: content || "",
             description: data.post.description || "",
             category: data.post.category?._id || data.post.category || "",
-            categorySlug: data.post.categorySlug || "",
+            categoryslug: data.post.categorySlug || "",
             subCategory:
               data.post.subCategory?._id || data.post.subCategory || "",
-            subCategorySlug: data.post.subCategorySlug || "",
+            subcategoryslug: data.post.subCategorySlug || "",
             tags: data.post.tags || "",
             status: data.post.status || "",
             isVisibleInCarousel: data.post.isVisibleInCarousel || false,
+            showAdOnLinks: data.post.showAdOnLinks || false,
             type: data.post.type || "",
             publishedAt: data.post.publishedAt || "",
-            imageUrl: data.post.imageUrl || ""
+            imageUrl: data.post.imageUrl || "",
           });
         } else {
           showToast(data.message || "Failed to fetch post.", "error");
         }
       } catch (error) {
         showToast("Error fetching post.", "error");
+        console.log("Post not found or error:", error);
       }
       setLoading(false);
     }
@@ -82,18 +94,27 @@ export function PostEditPage() {
   const onSubmit = async (data) => {
     try {
       const formData = new FormData();
+      // Append all fields except image
       Object.entries(data).forEach(([key, value]) => {
-        if (key === "image" && value instanceof File) {
-          formData.append("image", value);
-        } else {
-          formData.append(key, value);
+        if (key !== "image") {
+          if (typeof value === "object") {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value);
+          }
+
+          console.log(`Appending ${key}:`, JSON.stringify(value));
         }
       });
+
+      if (data.image && data.image instanceof File) {
+        formData.append("image", data.image);
+      }
 
       const res = await fetch(`${API_BASE_URL}/api/post/${id}`, {
         method: "PATCH",
         body: formData,
-        credentials: "include"
+        credentials: "include",
       });
       const result = await res.json();
       if (result.success) {

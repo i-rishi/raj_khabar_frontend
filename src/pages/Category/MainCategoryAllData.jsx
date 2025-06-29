@@ -23,7 +23,7 @@ import {
   TableRow,
   CircularProgress,
   Menu,
-  MenuItem
+  MenuItem,
 } from "@mui/material";
 import { Edit, Delete, MoreVert } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
@@ -51,7 +51,7 @@ export function MainCategoryAllData() {
   useEffect(() => {
     setLoading(true);
     fetch(`${API_BASE_URL}/api/centralized/category/${slug}/overview`, {
-      credentials: "include"
+      credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => {
@@ -123,7 +123,7 @@ export function MainCategoryAllData() {
     try {
       const res = await fetch(url, {
         method: "DELETE",
-        credentials: "include"
+        credentials: "include",
       });
       const data = await res.json();
       if (data.success) {
@@ -142,7 +142,7 @@ export function MainCategoryAllData() {
           cardPosts:
             type === "card"
               ? prev.cardPosts.filter((p) => p._id !== item._id)
-              : prev.cardPosts
+              : prev.cardPosts,
         }));
       } else {
         showToast(data.message || "Delete failed", "error");
@@ -176,7 +176,7 @@ export function MainCategoryAllData() {
           display: "flex",
           alignItems: "center",
           gap: 3,
-          background: "linear-gradient(135deg, #fff 60%, #ffe0e0 100%)"
+          background: "linear-gradient(135deg, #fff 60%, #ffe0e0 100%)",
         }}
       >
         <Avatar
@@ -465,7 +465,7 @@ export function MainCategoryAllData() {
           onClick={() => {
             handleMenuClose();
             if (menuItem?.type === "post") {
-              navigate(`/posts/edit/${menuItem.slug}`);
+              navigate(`/posts/edit/${menuItem._id}`);
             } else if (menuItem?.type === "card") {
               navigate(`/card-edit/${menuItem.slug}`);
             }

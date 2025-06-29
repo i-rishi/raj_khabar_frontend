@@ -23,6 +23,7 @@ import { MainCategoryAllData } from "./pages/Category/MainCategoryAllData";
 //subcategory imports
 import { SubcategoryCreate } from "./pages/Subcategory/SubcategoryCreate";
 import { SubcategoryEdit } from "./pages/Subcategory/SubcategoryEdit";
+import { SubcategoryClone } from "./pages/Subcategory/SubcategoryClone";
 // table structure imports
 import { Tablestructure } from "./pages/Tablestructure/Tablestructure";
 import { TableManagement } from "./pages/Tablestructure/TableManagement";
@@ -174,6 +175,14 @@ function AppContent() {
                   element={
                     <ProtectedRoute>
                       <SubcategoryEdit />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/category/:parentSlug/clone-subcategory/:slug"
+                  element={
+                    <ProtectedRoute>
+                      <SubcategoryClone />
                     </ProtectedRoute>
                   }
                 />
