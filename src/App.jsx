@@ -24,11 +24,16 @@ import { MainCategoryAllData } from "./pages/Category/MainCategoryAllData";
 import { SubcategoryCreate } from "./pages/Subcategory/SubcategoryCreate";
 import { SubcategoryEdit } from "./pages/Subcategory/SubcategoryEdit";
 import { SubcategoryClone } from "./pages/Subcategory/SubcategoryClone";
+
 // table structure imports
 import { Tablestructure } from "./pages/Tablestructure/Tablestructure";
 import { TableManagement } from "./pages/Tablestructure/TableManagement";
 import { TablePostCreate } from "./pages/Tablestructure/TablePostCreate";
 import { TablePostEdit } from "./pages/Tablestructure/TablePostEdit";
+import { HeaderComponentCreate } from "./pages/HeaderComponent/HeaderComponentCreate";
+import { HeaderComponentManagement } from "./pages/HeaderComponent/HeaderComponentManagement";
+import { HeaderComponentEdit } from "./pages/HeaderComponent/HeaderComponentEdit";
+import { HeaderComponentView } from "./pages/HeaderComponent/HeaderComponentView";
 
 //Card Imports
 import { CardManagement } from "./pages/Cards/CardManagement";
@@ -191,6 +196,38 @@ function AppContent() {
                   element={
                     <ProtectedRoute>
                       <Tablestructure />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/header-component-create"
+                  element={
+                    <ProtectedRoute>
+                      <HeaderComponentCreate />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/header-component"
+                  element={
+                    <ProtectedRoute>
+                      <HeaderComponentManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/header-component/edit/:id"
+                  element={
+                    <ProtectedRoute>
+                      <HeaderComponentEdit />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/header-component/view/:id"
+                  element={
+                    <ProtectedRoute>
+                      <HeaderComponentView />
                     </ProtectedRoute>
                   }
                 />

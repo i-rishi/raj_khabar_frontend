@@ -442,6 +442,10 @@ export function TablePostCreate() {
                                       <MenuItem value="internal">
                                         Internal
                                       </MenuItem>
+                                      <MenuItem value="pdf">PDF</MenuItem>
+                                      <MenuItem value="web-view">
+                                        Web View
+                                      </MenuItem>
                                     </Select>
                                   </FormControl>
                                 )}

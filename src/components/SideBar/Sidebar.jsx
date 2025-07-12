@@ -19,6 +19,7 @@ import { LuCreditCard } from "react-icons/lu";
 import { GrCloudUpload } from "react-icons/gr";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { useCategories } from "../../context/CategoryContext";
+import { RxComponent1 } from "react-icons/rx";
 
 export function Sidebar({ open }) {
   //fetch the category data
@@ -75,6 +76,11 @@ export function Sidebar({ open }) {
       icon: <GrCloudUpload />,
       label: "File Uploader",
       path: "/files"
+    },
+    {
+      icon: <RxComponent1 />,
+      label: "Header Component",
+      path: "/header-component"
     },
     { icon: <IoSettingsOutline />, label: "Settings", path: "/settings" }
   ];
