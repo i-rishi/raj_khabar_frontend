@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -28,6 +29,9 @@ import { useToast } from "../../context/ToastContext";
 import { useNavigate } from "react-router-dom";
 import { useCategories } from "../../context/CategoryContext";
 import { ConfirmDialog } from "../../components/Dialog/Dialog";
+import Checkbox from "@mui/material/Checkbox";
+import BulkDeleteToolbar from "../../components/BulkDeleteToolbar/BulkDeleteToolbar";
+import useBulkDelete from "../../hooks/useBulkDelete";
 
 export function TableManagement() {
   const { showToast } = useToast();
@@ -49,6 +53,25 @@ export function TableManagement() {
   // Dialog state for delete
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+
+  // Bulk selection hook for table posts
+  const {
+    selectedItems,
+    selectedCount,
+    isLoading: isBulkDeleting,
+    toggleSelection,
+    selectAll,
+    clearSelection,
+    isSelected,
+    performBulkDelete,
+  } = useBulkDelete(
+    'table-posts',
+    () => {
+      showToast('Selected table posts deleted', 'success');
+      fetchTablePosts();
+    },
+    (err) => showToast(err?.message || 'Failed to delete selected table posts', 'error')
+  );
 
   // Load subcategories when category changes
   useEffect(() => {
@@ -161,7 +184,7 @@ export function TableManagement() {
           <Typography variant="h5" sx={{ fontWeight: 700, color: "#800000" }}>
             Table Post Management
           </Typography>
-          <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} alignItems="center">
             <FormControl
               size="small"
               sx={{ minWidth: 150, background: "#fff" }}
@@ -233,19 +256,42 @@ export function TableManagement() {
             </Button>
           </Stack>
         </Stack>
+
+        {selectedCount > 0 && (
+          <BulkDeleteToolbar
+            selectedCount={selectedCount}
+            totalCount={tablePosts.length}
+            contentType="table-posts"
+            onSelectAll={() => selectAll(tablePosts.map((p) => p._id))}
+            onClearSelection={clearSelection}
+            onBulkDelete={performBulkDelete}
+            isLoading={isBulkDeleting}
+          />
+        )}
         <TableContainer sx={{ borderRadius: 3, background: "#fff" }}>
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    indeterminate={selectedCount > 0 && selectedCount < tablePosts.length}
+                    checked={tablePosts.length > 0 && selectedCount === tablePosts.length}
+                    onChange={(e) => {
+                      if (e.target.checked) selectAll(tablePosts.map((p) => p._id));
+                      else clearSelection();
+                    }}
+                    disabled={tablePosts.length === 0}
+                  />
+                </TableCell>
                 {dynamicColumns.length > 0 ? (
                   dynamicColumns.map((col) => (
-                    <TableCell key={col._id || col.name}>{col.name}</TableCell>
+                    <TableCell key={col._id || col.name}>{col.name}
+                    </TableCell>
                   ))
                 ) : (
                   <>
                     <TableCell>Name</TableCell>
                     <TableCell>Slug</TableCell>
-                    {/* ...other static columns */}
                   </>
                 )}
                 <TableCell align="center">Actions</TableCell>
@@ -266,7 +312,13 @@ export function TableManagement() {
                 </TableRow>
               ) : (
                 tablePosts.map((post) => (
-                  <TableRow key={post._id} hover>
+                  <TableRow key={post._id} hover selected={isSelected(post._id)}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={isSelected(post._id)}
+                        onChange={() => toggleSelection(post._id)}
+                      />
+                    </TableCell>
                     {dynamicColumns.length > 0 ? (
                       post.rowData.map((row, idx) => (
                         <TableCell key={row._id || idx}>
@@ -305,6 +357,7 @@ export function TableManagement() {
                         <IconButton
                           color="error"
                           onClick={() => handleDelete(post._id)}
+                          disabled={isBulkDeleting}
                         >
                           <Delete />
                         </IconButton>

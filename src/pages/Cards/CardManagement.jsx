@@ -1,3 +1,5 @@
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -19,6 +21,9 @@ import { API_BASE_URL } from "../../config";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../../context/ToastContext";
 import { ConfirmDialog } from "../../components/Dialog/Dialog";
+import Checkbox from "@mui/material/Checkbox";
+import BulkDeleteToolbar from "../../components/BulkDeleteToolbar/BulkDeleteToolbar";
+import useBulkDelete from "../../hooks/useBulkDelete";
 
 // App theme colors
 const PRIMARY = "#800000";
@@ -36,28 +41,52 @@ export function CardManagement() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
 
+  // Bulk selection hook
+  const {
+    selectedItems,
+    selectedCount,
+    isLoading: isBulkDeleting,
+    toggleSelection,
+    selectAll,
+    clearSelection,
+    isSelected,
+    performBulkDelete,
+  } = useBulkDelete(
+    'cards',
+    () => {
+      showToast('Selected cards deleted', 'success');
+      fetchCards();
+    },
+    (err) => showToast(err?.message || 'Failed to delete selected cards', 'error')
+  );
+
   // Fetch cards from backend
-  useEffect(() => {
-    async function fetchCards() {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/card/get-all-card-posts`, {
-          credentials: "include"
-        });
-        const data = await res.json();
-        if (data.success) {
-          setCards(data.data || []);
-        } else {
-          showToast(data.message || "Failed to fetch cards", "error");
-        }
-      } catch (error) {
-        showToast("Error fetching cards", error);
+  const fetchCards = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/card/get-all-card-posts`, {
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCards(data.data || []);
+      } else {
+        showToast(data.message || "Failed to fetch cards", "error");
       }
-      setLoading(false);
+    } catch (error) {
+      showToast("Error fetching cards", error);
     }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchCards();
     // eslint-disable-next-line
   }, []);
+
+  const handleSelectAll = () => {
+    selectAll(cards.map((c) => c._id));
+  };
 
   const handleDelete = async (id) => {
     setDeleteId(id);
@@ -103,7 +132,7 @@ export function CardManagement() {
         direction="row"
         alignItems="center"
         justifyContent="space-between"
-        mb={4}
+        mb={2}
       >
         <Typography
           variant="h4"
@@ -127,6 +156,19 @@ export function CardManagement() {
           + Create Card
         </Button>
       </Stack>
+
+      {selectedCount > 0 && (
+        <BulkDeleteToolbar
+          selectedCount={selectedCount}
+          totalCount={cards.length}
+          contentType="cards"
+          onSelectAll={handleSelectAll}
+          onClearSelection={clearSelection}
+          onBulkDelete={performBulkDelete}
+          isLoading={isBulkDeleting}
+        />
+      )}
+
       <Fade in>
         <Grid container spacing={4}>
           {loading ? (
@@ -158,13 +200,21 @@ export function CardManagement() {
                     "&:hover": { boxShadow: `0 12px 36px ${SECONDARY}` }
                   }}
                 >
-                  <CardContent>
+                  <CardContent onClick={() => toggleSelection(card._id)} sx={{ cursor: 'pointer' }}>
                     <Stack
                       direction="row"
                       alignItems="center"
                       spacing={1}
                       mb={1}
                     >
+                      <Checkbox
+                        checked={isSelected(card._id)}
+                        onChange={() => toggleSelection(card._id)}
+                        sx={{
+                          color: PRIMARY,
+                          '&.Mui-checked': { color: PRIMARY },
+                        }}
+                      />
                       <Chip
                         label={card.parentSlug}
                         color="primary"
@@ -232,8 +282,13 @@ export function CardManagement() {
                     )}
                   </CardContent>
                   <CardActions
-                    sx={{ justifyContent: "flex-end", pb: 2, pr: 2 }}
+                    sx={{ justifyContent: "space-between", pb: 2, pr: 2 }}
                   >
+                    <Chip
+                      label={isSelected(card._id) ? 'Selected' : ''}
+                      size="small"
+                      sx={{ visibility: isSelected(card._id) ? 'visible' : 'hidden', bgcolor: SECONDARY, color: PRIMARY }}
+                    />
                     <Tooltip title="Edit">
                       <IconButton
                         sx={{ color: PRIMARY }}
@@ -246,6 +301,7 @@ export function CardManagement() {
                       <IconButton
                         sx={{ color: SECONDARY }}
                         onClick={() => handleDelete(card._id)}
+                        disabled={isBulkDeleting}
                       >
                         <Delete />
                       </IconButton>

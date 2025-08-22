@@ -2,7 +2,6 @@
 import { Link } from "react-router-dom";
 import Button from "@mui/material/Button";
 import { MdOutlineMenuOpen, MdOutlineMenu } from "react-icons/md";
-import { SearchBox } from "../SearchBox/SearchBox";
 import { Box } from "@mui/material";
 import logo from "../../assets/images/rajkhabar.png";
 import { API_BASE_URL } from "../../config";
@@ -56,7 +55,7 @@ export function Header({ onMenuClick, isDrawerOpen }) {
           <div className="d-flex align-items-center ">
             <div className="col-sm-2 part_1">
               <Link to={"/"} className="d-flex align-items-center">
-                <img src={logo} className="logo" />
+                <img src={logo} className="logo" alt="Raj Khabar" />
               </Link>
             </div>
             <div className="col-sm-3 d-flex align-items-center part_2 pl-4">
@@ -67,7 +66,6 @@ export function Header({ onMenuClick, isDrawerOpen }) {
               >
                 {isDrawerOpen ? <MdOutlineMenuOpen /> : <MdOutlineMenu />}
               </Button>
-              <SearchBox />
             </div>
             <div className="col-sm-7 d-flex align-items-center justify-content-end part_2 pl-4">
               <div className="myAccWrapper">

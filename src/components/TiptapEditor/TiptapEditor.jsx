@@ -19,6 +19,7 @@ import FormatSizeIcon from "@mui/icons-material/FormatSize";
 import ResizeImage from "tiptap-extension-resize-image";
 import { FaHeading } from "react-icons/fa6";
 import AdSnippet from "./AdSnippet";
+import Embed from "./Embed";
 
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
@@ -124,9 +125,43 @@ export default function TiptapEditor({ onChange, initialContent }) {
         linkOnPaste: true,
         openOnClick: true
       }),
-      AdSnippet
+      AdSnippet,
+      Embed,
     ],
     content: initialContent || "",
+    editorProps: {
+      handlePaste: (view, event) => {
+        // Try image file from clipboard
+        const items = event.clipboardData?.items || [];
+        const imageItem = Array.from(items).find((it) => it.type?.startsWith("image/"));
+        if (imageItem) {
+          event.preventDefault();
+          const file = imageItem.getAsFile();
+          if (file) {
+            // Async upload and insert image without blocking
+            uploadImageToS3(file).then((imageUrl) => {
+              if (imageUrl) {
+                editor?.chain().focus().setImage({ src: imageUrl }).run();
+              }
+            });
+          }
+          return true; // handled
+        }
+
+        // Detect plain URL for embed providers
+        const text = event.clipboardData?.getData("text/plain")?.trim();
+        if (text && isEmbeddableUrl(text)) {
+          event.preventDefault();
+          const embedAttrs = toEmbedAttrs(text);
+          if (embedAttrs) {
+            editor?.chain().focus().insertContent({ type: "embed", attrs: embedAttrs }).run();
+            return true;
+          }
+        }
+
+        return false; // let Tiptap handle normal paste
+      },
+    },
     onUpdate: ({ editor }) => {
       onChange(editor.getJSON());
     }
@@ -153,11 +188,6 @@ export default function TiptapEditor({ onChange, initialContent }) {
     };
   }, [showTableGrid]);
 
-  useEffect(() => {
-    if (editor && initialContent) {
-      editor.commands.setContent(initialContent);
-    }
-  }, [editor, initialContent]);
 
   const uploadImageToS3 = async (file) => {
     try {
@@ -192,24 +222,6 @@ export default function TiptapEditor({ onChange, initialContent }) {
     }
   };
 
-  const handlePaste = async (event) => {
-    const items = event.clipboardData?.items;
-    const imageUrl = await uploadImageToS3(items);
-    console.log("Image URL:", imageUrl);
-    if (imageUrl) {
-      editor?.commands.setImage({ src: imageUrl });
-    }
-  };
-
-  useEffect(() => {
-    const content = document.querySelector(".ProseMirror");
-    if (content) {
-      content.addEventListener("paste", handlePaste);
-    }
-    return () => {
-      content?.removeEventListener("paste", handlePaste);
-    };
-  }, [editor]);
 
   // Single handler for outside click for both pickers
   useEffect(() => {
@@ -246,6 +258,64 @@ export default function TiptapEditor({ onChange, initialContent }) {
     };
   }, []);
 
+  // Helper: detect supported providers
+  const isEmbeddableUrl = (url) => {
+    try {
+      const u = new URL(url);
+      const h = u.hostname.replace(/^www\./, "");
+      return (
+        h.includes("youtube.com") ||
+        h.includes("youtu.be") ||
+        h.includes("instagram.com") ||
+        h.includes("facebook.com") ||
+        h.includes("fb.watch")
+      );
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // Map input URL -> attrs for our Embed node
+  const toEmbedAttrs = (url) => {
+    try {
+      const u = new URL(url);
+      const host = u.hostname.replace(/^www\./, "");
+
+      // YouTube
+      if (host.includes("youtube.com") || host.includes("youtu.be")) {
+        let videoId = "";
+        if (host.includes("youtu.be")) {
+          videoId = u.pathname.slice(1);
+        } else if (u.searchParams.get("v")) {
+          videoId = u.searchParams.get("v");
+        } else if (u.pathname.includes("/shorts/")) {
+          videoId = u.pathname.split("/shorts/")[1];
+        }
+        if (!videoId) return null;
+        const src = `https://www.youtube.com/embed/${videoId}`;
+        return { src, provider: "youtube", title: "YouTube video" };
+      }
+
+      // Instagram: store the original permalink and let the node view build the embed via script
+      if (host.includes("instagram.com")) {
+        // Normalize to a clean permalink (origin + pathname with trailing slash)
+        const permalink = `${u.origin}${u.pathname.endsWith('/') ? u.pathname : u.pathname + '/'}`;
+        return { url: permalink, provider: "instagram", title: "Instagram post" };
+      }
+
+      // Facebook: use /plugins/video.php?href=<encoded>
+      if (host.includes("facebook.com") || host.includes("fb.watch")) {
+        const href = encodeURIComponent(url);
+        const src = `https://www.facebook.com/plugins/video.php?href=${href}&show_text=false`; // works for video/reel URLs
+        return { src, provider: "facebook", title: "Facebook video" };
+      }
+
+      return null;
+    } catch (e) {
+      return null;
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -253,40 +323,59 @@ export default function TiptapEditor({ onChange, initialContent }) {
         borderRadius: 2,
         background: "#fffaf5",
         padding: 2,
-        minHeight: "300px",
         position: "relative",
         width: "100%",
-        "& .ProseMirror": {
-          padding: "10px",
-          minHeight: "600px",
-          border: "1px solid #800000",
-          borderRadius: "4px",
-          backgroundColor: "#fff",
-          "&:focus": {
-            outline: "none",
-            borderColor: "#800000"
-          }
-        }
+        display: "flex",
+        flexDirection: "column",
+        gap: 1
       }}
     >
-      <Box mb={1} display="flex" gap={1} flexWrap="wrap">
+      {/* Sticky toolbar */}
+      <Box
+        className="tiptap-toolbar"
+        mb={0}
+        display="flex"
+        gap={1}
+        flexWrap="wrap"
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 5,
+          background: "#fffaf5",
+          borderBottom: "1px solid #e6c8c8",
+          paddingBottom: 1,
+          marginBottom: 1
+        }}
+      >
         <Tooltip title="Bold">
-          <IconButton onClick={() => editor?.commands.toggleBold()}>
+          <IconButton
+            onClick={() => editor?.chain().focus().toggleBold().run()}
+            color={editor?.isActive('bold') ? 'primary' : 'default'}
+          >
             <FormatBoldIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Italic">
-          <IconButton onClick={() => editor?.commands.toggleItalic()}>
+          <IconButton
+            onClick={() => editor?.chain().focus().toggleItalic().run()}
+            color={editor?.isActive('italic') ? 'primary' : 'default'}
+          >
             <FormatItalicIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Bullet List">
-          <IconButton onClick={() => editor?.commands.toggleBulletList()}>
+          <IconButton
+            onClick={() => editor?.chain().focus().toggleBulletList().run()}
+            color={editor?.isActive('bulletList') ? 'primary' : 'default'}
+          >
             <FormatListBulletedIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Numbered List">
-          <IconButton onClick={() => editor?.commands.toggleOrderedList()}>
+          <IconButton
+            onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+            color={editor?.isActive('orderedList') ? 'primary' : 'default'}
+          >
             <FormatListNumberedIcon />
           </IconButton>
         </Tooltip>
@@ -433,11 +522,21 @@ export default function TiptapEditor({ onChange, initialContent }) {
             onClick={() => {
               const url = prompt("Enter URL");
               if (url) {
+                // Try to embed known providers first
+                const trimmed = url.trim();
+                if (isEmbeddableUrl(trimmed)) {
+                  const attrs = toEmbedAttrs(trimmed);
+                  if (attrs) {
+                    editor?.chain().focus().insertContent({ type: "embed", attrs }).run();
+                    return;
+                  }
+                }
+                // Fallback to normal link
                 editor
                   ?.chain()
                   .focus()
                   .extendMarkRange("link")
-                  .setLink({ href: url })
+                  .setLink({ href: trimmed })
                   .run();
               }
             }}
@@ -489,6 +588,7 @@ export default function TiptapEditor({ onChange, initialContent }) {
             onClick={() => {
               editor?.chain().focus().toggleCodeBlock().run();
             }}
+            color={editor?.isActive('codeBlock') ? 'primary' : 'default'}
             disabled={!editor}
           >
             <CodeIcon />
@@ -521,7 +621,7 @@ export default function TiptapEditor({ onChange, initialContent }) {
           position="absolute"
           zIndex={10}
           ref={colorPickerRef}
-          sx={{ top: "45px", left: "180px" }} // Adjust position as needed
+          sx={{ top: "56px", left: "180px" }}
         >
           <SketchPicker
             color={currentColor}
@@ -539,7 +639,7 @@ export default function TiptapEditor({ onChange, initialContent }) {
           position="absolute"
           zIndex={10}
           ref={highlightPickerRef}
-          sx={{ top: "45px", left: "240px" }} // Adjust position as needed
+          sx={{ top: "56px", left: "240px" }}
         >
           <ChromePicker
             color={currentHighlightColor}
@@ -560,8 +660,8 @@ export default function TiptapEditor({ onChange, initialContent }) {
           sx={{
             position: "absolute",
             zIndex: 20,
-            top: 55,
-            left: 220, // adjust as needed
+            top: 70,
+            left: 220,
             background: "#fff",
             border: "1px solid #ccc",
             borderRadius: 2,
@@ -614,7 +714,27 @@ export default function TiptapEditor({ onChange, initialContent }) {
         </Box>
       )}
 
-      <EditorContent editor={editor} />
+      {/* Scrollable content area */}
+      <Box
+        sx={{
+          maxHeight: "60vh",
+          overflowY: "auto",
+          "& .ProseMirror": {
+            padding: "10px",
+            minHeight: "400px",
+            border: "1px solid #800000",
+            borderRadius: "4px",
+            backgroundColor: "#fff",
+            "&:focus": {
+              outline: "none",
+              borderColor: "#800000"
+            }
+          }
+        }}
+      >
+        <EditorContent editor={editor} />
+      </Box>
+
       {editor?.isActive("image") && (
         <Box
           sx={{

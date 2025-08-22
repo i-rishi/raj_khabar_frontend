@@ -378,6 +378,29 @@ export function PostFields({ register, errors, watch, setValue, post }) {
           />
         </label>
       </Grid>
+      {/* Send Notification */}
+      <Grid size={3}>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginTop: "8px",
+          }}
+        >
+          Send Notification ?
+          <Checkbox
+            {...register("sendNotification")}
+            sx={{
+              color: "#800000",
+              "&.Mui-checked": {
+                color: "#800000",
+              },
+            }}
+            checked={!!watch("sendNotification")}
+          />
+        </label>
+      </Grid>
       {/* Editor */}
       <Grid size={12}>
         <TiptapEditor

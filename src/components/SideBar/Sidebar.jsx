@@ -18,8 +18,10 @@ import { TbTableOptions, TbTableDashed } from "react-icons/tb";
 import { LuCreditCard } from "react-icons/lu";
 import { GrCloudUpload } from "react-icons/gr";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import { IoShareSocialOutline } from "react-icons/io5";
 import { useCategories } from "../../context/CategoryContext";
 import { RxComponent1 } from "react-icons/rx";
+import { HEADER_HEIGHT, SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_EXPANDED_WIDTH } from "../../constants/layout";
 
 export function Sidebar({ open }) {
   //fetch the category data
@@ -28,10 +30,9 @@ export function Sidebar({ open }) {
   const navigate = useNavigate();
   const currentPath = location.pathname;
 
-  const [hovered, setHovered] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState({});
 
-  const isSidebarOpen = open || hovered;
+  const isSidebarOpen = open;
 
   const handleToggleSubmenu = (label) => {
     setOpenSubmenus((prev) => ({
@@ -82,6 +83,7 @@ export function Sidebar({ open }) {
       label: "Header Component",
       path: "/header-component"
     },
+    { icon: <IoShareSocialOutline />, label: "Social Links", path: "/social-links" },
     { icon: <IoSettingsOutline />, label: "Settings", path: "/settings" }
   ];
 
@@ -104,13 +106,11 @@ export function Sidebar({ open }) {
       variant="permanent"
       anchor="left"
       PaperProps={{
-        onMouseEnter: () => setHovered(true),
-        onMouseLeave: () => setHovered(false),
         sx: {
-          top: 70,
+          top: HEADER_HEIGHT,
           backgroundColor: "#f4f0e4",
           overflowX: "hidden",
-          width: isSidebarOpen ? 240 : 70,
+          width: isSidebarOpen ? SIDEBAR_EXPANDED_WIDTH : SIDEBAR_COLLAPSED_WIDTH,
           transition: "width 0.3s",
           whiteSpace: "nowrap",
           borderRight: "1px solid #ddd"
@@ -161,11 +161,20 @@ export function Sidebar({ open }) {
                 placement="right"
               >
                 <ListItem
-                  onClick={() =>
-                    hasChildren
-                      ? handleToggleSubmenu(item.label)
-                      : navigate(item.path)
-                  }
+                  onClick={() => {
+                    if (!isSidebarOpen) {
+                      if (hasChildren) {
+                        const firstChildPath = item.children[0]?.path;
+                        if (firstChildPath) navigate(firstChildPath);
+                      } else {
+                        navigate(item.path);
+                      }
+                    } else if (hasChildren) {
+                      handleToggleSubmenu(item.label);
+                    } else {
+                      navigate(item.path);
+                    }
+                  }}
                   component={hasChildren ? "div" : Link}
                   to={!hasChildren ? item.path : undefined}
                   selected={isActive}

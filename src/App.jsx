@@ -12,7 +12,8 @@ import { Dashboard } from "./pages/home/dashboard";
 import { PostCreate } from "./pages/Posts/PostCreate";
 import { Header } from "./components/Header/Header";
 import { Sidebar } from "./components/SideBar/Sidebar";
-import PostManagement from "./pages/Posts/PostManagement";
+// import PostManagement from "./pages/Posts/PostManagement";
+import PostManagementWithBulkDelete from "./pages/Posts/PostManagementWithBulkDelete";
 import { PostEditPage } from "./pages/Posts/PostEditPage";
 //category imports
 import { CategoryManagement } from "./pages/Category/CategoryManagement";
@@ -48,12 +49,16 @@ import { AddUser } from "./pages/Settings/AddUser";
 //File Imports
 import { FilesUploader } from "./pages/FilesUploader/FilesUploader";
 
+//social media links
+import { SocialLinksManagement } from "./pages/Sociallinks/SocialLinksManagement";
+
 import { ToastProvider } from "./context/ToastContext";
 import { UserProvider } from "./context/UserContext";
 import LoginPage from "./pages/Login/loginPage";
 import { useUser } from "../src/context/UserContext";
 import { SplashScreen } from "./pages/SplashScreen/SplashScreen";
 import Cookies from "js-cookie";
+import { HEADER_HEIGHT, SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_EXPANDED_WIDTH } from "./constants/layout";
 
 // ProtectedRoute component
 function ProtectedRoute({ children }) {
@@ -96,7 +101,11 @@ function AppContent() {
             <div
               className="content"
               style={{
-                marginLeft: !hideLayout ? (drawerOpen ? 240 : 60) : 0,
+                marginLeft: !hideLayout
+                  ? drawerOpen
+                    ? SIDEBAR_EXPANDED_WIDTH
+                    : SIDEBAR_COLLAPSED_WIDTH
+                  : 0,
                 transition: "margin-left 0.3s ease"
               }}
             >
@@ -131,7 +140,7 @@ function AppContent() {
                   path="/posts"
                   element={
                     <ProtectedRoute>
-                      <PostManagement />
+                      <PostManagementWithBulkDelete />
                     </ProtectedRoute>
                   }
                 />
@@ -301,6 +310,14 @@ function AppContent() {
                   element={
                     <ProtectedRoute>
                       <SettingsPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/social-links"
+                  element={
+                    <ProtectedRoute>
+                      <SocialLinksManagement />
                     </ProtectedRoute>
                   }
                 />

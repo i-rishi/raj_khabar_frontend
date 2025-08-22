@@ -74,6 +74,7 @@ export function PostEditPage() {
             status: data.post.status || "",
             isVisibleInCarousel: data.post.isVisibleInCarousel || false,
             showAdOnLinks: data.post.showAdOnLinks || false,
+            sendNotification: data.post.sendNotification || false,
             type: data.post.type || "",
             publishedAt: data.post.publishedAt || "",
             imageUrl: data.post.imageUrl || "",
