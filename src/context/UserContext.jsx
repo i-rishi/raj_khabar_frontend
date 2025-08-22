@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { API_BASE_URL } from "../config";
+import Cookies from "js-cookie";
 
 const UserContext = createContext();
 
@@ -9,8 +10,12 @@ export function UserProvider({ children }) {
   useEffect(() => {
     async function fetchUser() {
       try {
+        // Support both cookie-based and token-based auth.
+        const token = localStorage.getItem("authToken") || Cookies.get("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
         const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          credentials: "include" // Important for cookies!
+          credentials: "include", // send cookies if available
+          headers
         });
         const data = await res.json();
         if (data.success && data.user) {

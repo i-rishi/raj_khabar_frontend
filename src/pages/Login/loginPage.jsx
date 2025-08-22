@@ -29,7 +29,9 @@ export default function LoginPage() {
       console.log("Login result:", result);
       setUser(result.user);
       if (result.success && result.token) {
-        // Store token as a session cookie (expires when browser closes)
+        // Persist token for Authorization header on subsequent requests
+        localStorage.setItem("authToken", result.token);
+        // Optional: also keep a cookie copy if other code expects it
         Cookies.set("token", result.token, { sameSite: "strict" });
         navigate("/dashboard");
       } else {
