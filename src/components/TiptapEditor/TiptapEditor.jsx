@@ -14,7 +14,19 @@ import Color from "@tiptap/extension-color";
 import FontFamily from "@tiptap/extension-font-family";
 import Link from "@tiptap/extension-link";
 import { SketchPicker, ChromePicker } from "react-color";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  FormControlLabel,
+  Switch,
+} from "@mui/material";
 import FormatSizeIcon from "@mui/icons-material/FormatSize";
 import ResizeImage from "tiptap-extension-resize-image";
 import { FaHeading } from "react-icons/fa6";
@@ -78,6 +90,36 @@ const FontSize = Extension.create({
   }
 });
 
+const isUrl = (string) => {
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+};
+
+const CustomLink = Link.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      showAd: {
+        default: false,
+        parseHTML: (element) => element.getAttribute("data-show-ad") === "true",
+        renderHTML: (attributes) => {
+          if (!attributes.showAd) {
+            return {};
+          }
+          return {
+            "data-show-ad": "true",
+            class: "ad-enabled-link"
+          };
+        }
+      }
+    };
+  }
+});
+
 export default function TiptapEditor({ onChange, initialContent }) {
   const inputImageRef = useRef();
 
@@ -103,6 +145,11 @@ export default function TiptapEditor({ onChange, initialContent }) {
   const tableGridRef = useRef(null);
   const tableButtonRef = useRef(null);
 
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkInputUrl, setLinkInputUrl] = useState("");
+  const [linkShowAd, setLinkShowAd] = useState(false);
+  const [linkIsPaste, setLinkIsPaste] = useState(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -120,7 +167,7 @@ export default function TiptapEditor({ onChange, initialContent }) {
       Heading.configure({
         levels: [1, 2, 3, 4, 5, 6]
       }),
-      Link.configure({
+      CustomLink.configure({
         autolink: true,
         linkOnPaste: true,
         openOnClick: true
@@ -148,13 +195,23 @@ export default function TiptapEditor({ onChange, initialContent }) {
           return true; // handled
         }
 
-        // Detect plain URL for embed providers
+        // Detect plain URL for embed providers or normal links (to ask about ads)
         const text = event.clipboardData?.getData("text/plain")?.trim();
-        if (text && isEmbeddableUrl(text)) {
-          event.preventDefault();
-          const embedAttrs = toEmbedAttrs(text);
-          if (embedAttrs) {
-            editor?.chain().focus().insertContent({ type: "embed", attrs: embedAttrs }).run();
+        if (text && isUrl(text)) {
+          if (isEmbeddableUrl(text)) {
+            event.preventDefault();
+            const embedAttrs = toEmbedAttrs(text);
+            if (embedAttrs) {
+              editor?.chain().focus().insertContent({ type: "embed", attrs: embedAttrs }).run();
+              return true;
+            }
+          } else {
+            // It's a regular URL, prompt for ad configuration
+            event.preventDefault();
+            setLinkInputUrl(text);
+            setLinkShowAd(false);
+            setLinkIsPaste(true);
+            setLinkDialogOpen(true);
             return true;
           }
         }
@@ -520,25 +577,12 @@ export default function TiptapEditor({ onChange, initialContent }) {
         <Tooltip title="Insert Link">
           <IconButton
             onClick={() => {
-              const url = prompt("Enter URL");
-              if (url) {
-                // Try to embed known providers first
-                const trimmed = url.trim();
-                if (isEmbeddableUrl(trimmed)) {
-                  const attrs = toEmbedAttrs(trimmed);
-                  if (attrs) {
-                    editor?.chain().focus().insertContent({ type: "embed", attrs }).run();
-                    return;
-                  }
-                }
-                // Fallback to normal link
-                editor
-                  ?.chain()
-                  .focus()
-                  .extendMarkRange("link")
-                  .setLink({ href: trimmed })
-                  .run();
-              }
+              const prevUrl = editor?.getAttributes("link")?.href || "";
+              const prevShowAd = editor?.getAttributes("link")?.showAd || false;
+              setLinkInputUrl(prevUrl);
+              setLinkShowAd(prevShowAd);
+              setLinkIsPaste(false);
+              setLinkDialogOpen(true);
             }}
             disabled={!editor}
           >
@@ -765,6 +809,99 @@ export default function TiptapEditor({ onChange, initialContent }) {
         onChange={handleImageUpload}
         style={{ display: "none" }}
       />
+
+      {/* Link Dialog */}
+      <Dialog open={linkDialogOpen} onClose={() => setLinkDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ color: "#800000", fontWeight: "bold" }}>
+          {linkIsPaste ? "Pasted Link Options" : "Insert / Edit Link"}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="URL Address"
+            type="url"
+            fullWidth
+            variant="outlined"
+            value={linkInputUrl}
+            onChange={(e) => setLinkInputUrl(e.target.value)}
+            disabled={linkIsPaste}
+            sx={{
+              mt: 1,
+              "& .MuiOutlinedInput-root": {
+                "&.Mui-focused fieldset": {
+                  borderColor: "#800000",
+                },
+              },
+              "& label.Mui-focused": {
+                color: "#800000",
+              },
+            }}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={linkShowAd}
+                onChange={(e) => setLinkShowAd(e.target.checked)}
+                sx={{
+                  "& .MuiSwitch-switchBase.Mui-checked": {
+                    color: "#800000",
+                    "&:hover": {
+                      backgroundColor: "rgba(128, 0, 0, 0.08)",
+                    },
+                  },
+                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                    backgroundColor: "#800000",
+                  },
+                }}
+              />
+            }
+            label="Show Ad when this link is clicked"
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLinkDialogOpen(false)} sx={{ color: "#666" }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              const trimmed = linkInputUrl.trim();
+              if (trimmed) {
+                if (isEmbeddableUrl(trimmed)) {
+                  const attrs = toEmbedAttrs(trimmed);
+                  if (attrs) {
+                    editor?.chain().focus().insertContent({ type: "embed", attrs }).run();
+                  }
+                } else {
+                  if (linkIsPaste) {
+                    editor?.chain().focus().insertContent({
+                      type: "text",
+                      text: trimmed,
+                      marks: [
+                        {
+                          type: "link",
+                          attrs: { href: trimmed, showAd: linkShowAd }
+                        }
+                      ]
+                    }).run();
+                  } else {
+                    if (trimmed === "") {
+                      editor?.chain().focus().extendMarkRange("link").unsetLink().run();
+                    } else {
+                      editor?.chain().focus().extendMarkRange("link").setLink({ href: trimmed, showAd: linkShowAd }).run();
+                    }
+                  }
+                }
+              }
+              setLinkDialogOpen(false);
+            }}
+            sx={{ color: "#800000", fontWeight: "bold" }}
+          >
+            {linkIsPaste ? "Insert Pasted Link" : "Save Link"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

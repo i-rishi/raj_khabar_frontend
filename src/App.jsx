@@ -52,6 +52,9 @@ import { FilesUploader } from "./pages/FilesUploader/FilesUploader";
 //social media links
 import { SocialLinksManagement } from "./pages/Sociallinks/SocialLinksManagement";
 
+//Ad Settings
+import { AdSettingsManagement } from "./pages/AdSettings/AdSettingsManagement";
+
 import { ToastProvider } from "./context/ToastContext";
 import { UserProvider } from "./context/UserContext";
 import LoginPage from "./pages/Login/loginPage";
@@ -334,6 +337,14 @@ function AppContent() {
                   element={
                     <ProtectedRoute>
                       <UserManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/ad-settings"
+                  element={
+                    <ProtectedRoute>
+                      <AdSettingsManagement />
                     </ProtectedRoute>
                   }
                 />

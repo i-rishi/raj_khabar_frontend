@@ -21,6 +21,7 @@ import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { IoShareSocialOutline } from "react-icons/io5";
 import { useCategories } from "../../context/CategoryContext";
 import { RxComponent1 } from "react-icons/rx";
+import { FaAd } from "react-icons/fa";
 import { HEADER_HEIGHT, SIDEBAR_COLLAPSED_WIDTH, SIDEBAR_EXPANDED_WIDTH } from "../../constants/layout";
 
 export function Sidebar({ open }) {
@@ -84,6 +85,7 @@ export function Sidebar({ open }) {
       path: "/header-component"
     },
     { icon: <IoShareSocialOutline />, label: "Social Links", path: "/social-links" },
+    { icon: <FaAd />, label: "Ad Settings", path: "/ad-settings" },
     { icon: <IoSettingsOutline />, label: "Settings", path: "/settings" }
   ];
 

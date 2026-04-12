@@ -39,9 +39,10 @@ export function Dashboard() {
         setCategoryCount(categories.length);
 
         const currentMonth = dayjs().month();
+        const currentYear = dayjs().year();
         const filtered = allPosts.filter((post) => {
-          const month = dayjs(post.createdAt).month() + 1;
-          return month == currentMonth;
+          const postDate = dayjs(post.createdAt);
+          return postDate.month() === currentMonth && postDate.year() === currentYear;
         });
         console.log(filtered);
 
