@@ -26,7 +26,6 @@ export function PostFields({ register, errors, watch, setValue, post }) {
     setEditorContent(json);
     setValue("content", json); // register it in react-hook-form
   };
-  console.log("PostFields component rendered with post:", post);
   const handleTagKeyDown = (e) => {
     if ((e.key === "Enter" || e.key === ",") && tagInput.trim()) {
       e.preventDefault();
@@ -401,6 +400,49 @@ export function PostFields({ register, errors, watch, setValue, post }) {
           />
         </label>
       </Grid>
+      {/* Page Block Settings */}
+      <Grid size={3}>
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginTop: "8px",
+          }}
+        >
+          Enable Page Block
+          <Checkbox
+            {...register("isPageBlockEnabled")}
+            sx={{
+              color: "#800000",
+              "&.Mui-checked": {
+                color: "#800000",
+              },
+            }}
+            checked={!!watch("isPageBlockEnabled")}
+          />
+        </label>
+      </Grid>
+      {watch("isPageBlockEnabled") && (
+        <Grid size={4}>
+          <TextField
+            label="Block at Percentage (%)"
+            type="number"
+            variant="outlined"
+            size="small"
+            fullWidth
+            {...register("pageBlockPercentage", {
+              valueAsNumber: true,
+              min: { value: 30, message: "Minimum 30%" },
+              max: { value: 100, message: "Maximum 100%" }
+            })}
+            inputProps={{ min: 30, max: 100 }}
+            error={!!errors.pageBlockPercentage}
+            helperText={errors.pageBlockPercentage?.message}
+            sx={{ ...textfieldStyle, mt: 1 }}
+          />
+        </Grid>
+      )}
       {/* Editor */}
       <Grid size={12}>
         <TiptapEditor

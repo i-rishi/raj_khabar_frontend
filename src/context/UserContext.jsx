@@ -6,7 +6,7 @@ const UserContext = createContext();
 export function UserProvider({ children }) {
   const [user, setUser] = useState(undefined); // undefined = loading
 
-  useEffect(() => { 
+  useEffect(() => {
     async function fetchUser() {
       try {
         const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
@@ -14,7 +14,6 @@ export function UserProvider({ children }) {
         });
         const data = await res.json();
         if (data.success && data.user) {
-          console.log("Response from /me:", data.user);
           setUser(data.user);
         } else {
           setUser(null);
