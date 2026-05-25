@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useRef, useState } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
+import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Table from "@tiptap/extension-table";
 import TableRow from "@tiptap/extension-table-row";
@@ -26,12 +26,15 @@ import {
   TextField,
   FormControlLabel,
   Switch,
+  Typography,
 } from "@mui/material";
 import FormatSizeIcon from "@mui/icons-material/FormatSize";
 import ResizeImage from "tiptap-extension-resize-image";
 import { FaHeading } from "react-icons/fa6";
 import AdSnippet from "./AdSnippet";
 import Embed from "./Embed";
+import HtmlBlock from "./HtmlBlock";
+import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
 import FormatItalicIcon from "@mui/icons-material/FormatItalic";
@@ -150,6 +153,53 @@ export default function TiptapEditor({ onChange, initialContent }) {
   const [linkShowAd, setLinkShowAd] = useState(false);
   const [linkIsPaste, setLinkIsPaste] = useState(false);
 
+  const [codeDialogOpen, setCodeDialogOpen] = useState(false);
+  const [codeDialogPos, setCodeDialogPos] = useState(null);
+  const [inputHtml, setInputHtml] = useState("");
+  const [inputCss, setInputCss] = useState("");
+  const [inputJs, setInputJs] = useState("");
+  const [codeActiveTab, setCodeActiveTab] = useState("html");
+
+  useEffect(() => {
+    const handleEditHtmlBlock = (e) => {
+      const { pos, html, css, js } = e.detail;
+      setCodeDialogPos(pos);
+      setInputHtml(html || "");
+      setInputCss(css || "");
+      setInputJs(js || "");
+      setCodeActiveTab("html");
+      setCodeDialogOpen(true);
+    };
+
+    window.addEventListener("edit-html-block", handleEditHtmlBlock);
+    return () => {
+      window.removeEventListener("edit-html-block", handleEditHtmlBlock);
+    };
+  }, []);
+
+  const handleSaveCode = () => {
+    if (codeDialogPos !== null && codeDialogPos !== undefined) {
+      editor.view.dispatch(
+        editor.state.tr.setNodeMarkup(codeDialogPos, null, {
+          html: inputHtml,
+          css: inputCss,
+          js: inputJs
+        })
+      );
+    } else {
+      editor?.chain().focus().insertHtmlBlock({
+        html: inputHtml,
+        css: inputCss,
+        js: inputJs
+      }).run();
+    }
+    setCodeDialogOpen(false);
+    setCodeDialogPos(null);
+    setInputHtml("");
+    setInputCss("");
+    setInputJs("");
+  };
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -174,6 +224,7 @@ export default function TiptapEditor({ onChange, initialContent }) {
       }),
       AdSnippet,
       Embed,
+      HtmlBlock,
     ],
     content: initialContent || "",
     editorProps: {
@@ -638,6 +689,22 @@ export default function TiptapEditor({ onChange, initialContent }) {
             <CodeIcon />
           </IconButton>
         </Tooltip>
+        <Tooltip title="Insert Custom HTML Block">
+          <IconButton
+            onClick={() => {
+              setCodeDialogPos(null);
+              setInputHtml("");
+              setInputCss("");
+              setInputJs("");
+              setCodeActiveTab("html");
+              setCodeDialogOpen(true);
+            }}
+            color={editor?.isActive('htmlBlock') ? 'primary' : 'default'}
+            disabled={!editor}
+          >
+            <IntegrationInstructionsIcon />
+          </IconButton>
+        </Tooltip>
         {/* <Tooltip title="Insert Google Ad Snippet">
           <IconButton
             onClick={() => {
@@ -772,6 +839,20 @@ export default function TiptapEditor({ onChange, initialContent }) {
             "&:focus": {
               outline: "none",
               borderColor: "#800000"
+            },
+            "& img": {
+              maxWidth: "100%",
+              height: "auto",
+              borderRadius: "8px",
+              border: "1px solid #e6c8c8",
+              transition: "all 0.2s ease-in-out",
+              display: "block",
+              margin: "16px auto",
+              "&.ProseMirror-selectednode": {
+                outline: "3px solid #800000",
+                outlineOffset: "3px",
+                boxShadow: "0 0 16px rgba(128, 0, 0, 0.35)",
+              }
             }
           }
         }}
@@ -779,29 +860,60 @@ export default function TiptapEditor({ onChange, initialContent }) {
         <EditorContent editor={editor} />
       </Box>
 
-      {editor?.isActive("image") && (
-        <Box
-          sx={{
-            position: "absolute",
-            top:
-              editor.view.dom.querySelector("img.ProseMirror-selectednode")
-                ?.offsetTop || 60,
-            left:
-              (editor.view.dom.querySelector("img.ProseMirror-selectednode")
-                ?.offsetLeft || 60) + 40,
-            zIndex: 30,
-            background: "#fff",
-            border: "1px solid #800000",
-            borderRadius: "50%",
-            p: 0.5,
-            cursor: "pointer",
-            boxShadow: 2
+      {editor && (
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{
+            duration: 150,
+            placement: "top",
           }}
-          onClick={() => editor.commands.deleteSelection()}
+          shouldShow={({ editor }) => editor.isActive("image")}
         >
-          <IoCloseCircle />
-        </Box>
+          <Box
+            sx={{
+              background: "#fffaf5",
+              border: "1px solid #800000",
+              borderRadius: "8px",
+              boxShadow: "0px 4px 16px rgba(128, 0, 0, 0.15)",
+              p: 0.75,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: "bold",
+                color: "#800000",
+                px: 1,
+                borderRight: "1px solid #e6c8c8",
+                fontSize: "11px",
+              }}
+            >
+              IMAGE OPTIONS
+            </Typography>
+            
+            {/* Delete action button */}
+            <Tooltip title="Delete Image">
+              <IconButton
+                size="small"
+                onClick={() => editor.commands.deleteSelection()}
+                sx={{
+                  color: "#d32f2f",
+                  backgroundColor: "transparent",
+                  "&:hover": {
+                    backgroundColor: "#fde8e8",
+                  },
+                }}
+              >
+                <IoCloseCircle size={20} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </BubbleMenu>
       )}
+
       <input
         type="file"
         accept="image/*"
@@ -899,6 +1011,198 @@ export default function TiptapEditor({ onChange, initialContent }) {
             sx={{ color: "#800000", fontWeight: "bold" }}
           >
             {linkIsPaste ? "Insert Pasted Link" : "Save Link"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Code Editor Dialog */}
+      <Dialog
+        open={codeDialogOpen}
+        onClose={() => setCodeDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: "#fffaf5",
+            borderRadius: "12px",
+            border: "1px solid #800000",
+          },
+        }}
+      >
+        <DialogTitle sx={{ m: 0, p: 2, backgroundColor: "#800000", color: "#fff", display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>{codeDialogPos !== null ? "Edit Custom HTML Block" : "Insert Custom HTML Block"}</span>
+          <IconButton onClick={() => setCodeDialogOpen(false)} sx={{ color: "#fff" }}>
+            <IoCloseCircle size={24} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* Tab bar */}
+          <Box display="flex" borderBottom="1px solid #e6c8c8" mb={2}>
+            {["html", "css", "js"].map((tab) => (
+              <Button
+                key={tab}
+                onClick={() => setCodeActiveTab(tab)}
+                sx={{
+                  color: codeActiveTab === tab ? "#800000" : "#888",
+                  borderBottom: codeActiveTab === tab ? "2px solid #800000" : "none",
+                  fontWeight: codeActiveTab === tab ? "bold" : "normal",
+                  borderRadius: 0,
+                  px: 3,
+                  py: 1,
+                  textTransform: "uppercase",
+                  fontSize: "13px",
+                  "&:hover": {
+                    background: "rgba(128,0,0,0.05)"
+                  }
+                }}
+              >
+                {tab === "js" ? "JavaScript" : tab}
+              </Button>
+            ))}
+          </Box>
+
+          {/* Code textareas */}
+          {codeActiveTab === "html" && (
+            <Box>
+              <Typography variant="caption" display="block" color="#800000" fontWeight="bold" mb={0.5}>
+                HTML Content
+              </Typography>
+              <TextField
+                multiline
+                rows={12}
+                fullWidth
+                variant="outlined"
+                placeholder="<!-- Paste your HTML here -->"
+                value={inputHtml}
+                onChange={(e) => setInputHtml(e.target.value)}
+                inputProps={{
+                  style: { fontFamily: "monospace", fontSize: "14px" }
+                }}
+                sx={{
+                  backgroundColor: "#fff",
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#e6c8c8" },
+                    "&:hover fieldset": { borderColor: "#800000" },
+                    "&.Mui-focused fieldset": { borderColor: "#800000" }
+                  }
+                }}
+              />
+            </Box>
+          )}
+
+          {codeActiveTab === "css" && (
+            <Box>
+              <Typography variant="caption" display="block" color="#800000" fontWeight="bold" mb={0.5}>
+                CSS Styles (applied only inside this block)
+              </Typography>
+              <TextField
+                multiline
+                rows={12}
+                fullWidth
+                variant="outlined"
+                placeholder="/* Style rules */&#10;.my-class { color: red; }"
+                value={inputCss}
+                onChange={(e) => setInputCss(e.target.value)}
+                inputProps={{
+                  style: { fontFamily: "monospace", fontSize: "14px" }
+                }}
+                sx={{
+                  backgroundColor: "#fff",
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#e6c8c8" },
+                    "&:hover fieldset": { borderColor: "#800000" },
+                    "&.Mui-focused fieldset": { borderColor: "#800000" }
+                  }
+                }}
+              />
+            </Box>
+          )}
+
+          {codeActiveTab === "js" && (
+            <Box>
+              <Typography variant="caption" display="block" color="#800000" fontWeight="bold" mb={0.5}>
+                JavaScript Code (sandboxed)
+              </Typography>
+              <TextField
+                multiline
+                rows={12}
+                fullWidth
+                variant="outlined"
+                placeholder="// JavaScript logic&#10;console.log('Hello from custom HTML block');"
+                value={inputJs}
+                onChange={(e) => setInputJs(e.target.value)}
+                inputProps={{
+                  style: { fontFamily: "monospace", fontSize: "14px" }
+                }}
+                sx={{
+                  backgroundColor: "#fff",
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#e6c8c8" },
+                    "&:hover fieldset": { borderColor: "#800000" },
+                    "&.Mui-focused fieldset": { borderColor: "#800000" }
+                  }
+                }}
+              />
+            </Box>
+          )}
+
+          {/* Quick Preview panel in dialog */}
+          <Box border="1px solid #e6c8c8" borderRadius="6px" p={1.5} bgcolor="#ffffff" mt={1}>
+            <Typography variant="caption" display="block" color="#666" mb={1} sx={{ fontStyle: 'italic' }}>
+              ⚡ Live Preview inside Sandbox
+            </Typography>
+            <iframe
+              title="Dialog sandbox preview"
+              srcDoc={`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                  <style>
+                    body { margin: 0; padding: 6px; font-family: sans-serif; font-size: 13px; color: #333; }
+                    ${inputCss}
+                  </style>
+                </head>
+                <body>
+                  ${inputHtml || '<div style="color: #999; font-style: italic;">No HTML content yet.</div>'}
+                  <script>
+                    try {
+                      ${inputJs}
+                    } catch (err) {
+                      console.error(err);
+                    }
+                  </script>
+                </body>
+                </html>
+              `}
+              style={{ width: "100%", height: "120px", border: "none", background: "#fdfdfd" }}
+              sandbox="allow-scripts"
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, backgroundColor: "#fffaf5", gap: 1.5 }}>
+          <Button
+            onClick={() => setCodeDialogOpen(false)}
+            variant="outlined"
+            sx={{
+              color: "#800000",
+              borderColor: "#800000",
+              textTransform: "none",
+              "&:hover": { borderColor: "#600000", background: "rgba(128,0,0,0.05)" }
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSaveCode}
+            variant="contained"
+            sx={{
+              backgroundColor: "#800000",
+              color: "#fff",
+              textTransform: "none",
+              "&:hover": { backgroundColor: "#600000" }
+            }}
+          >
+            Save Code
           </Button>
         </DialogActions>
       </Dialog>
