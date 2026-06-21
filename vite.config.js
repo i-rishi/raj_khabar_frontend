@@ -6,8 +6,7 @@ export default defineConfig({
   preview: {
     host: true,
     allowedHosts: [
-      "raj-khabar-frontend-production.up.railway.app",
-      "raj-khabar-frontend-staging-ikg8-production.up.railway.app",
+      ".up.railway.app",
       "www.rajkhabar.com",
       "staging.rajkhabar.com"
     ]
