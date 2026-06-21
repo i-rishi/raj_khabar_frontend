@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "npm run build && vite preview --host 0.0.0.0 --port $PORT",
+    "start": "npm run build && npx serve -l $PORT -s dist",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -51,6 +51,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "serve": "^14.2.4",
     "vite": "^6.3.1"
   }
 }
