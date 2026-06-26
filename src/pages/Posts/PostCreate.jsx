@@ -6,8 +6,10 @@ import { useForm, FormProvider } from "react-hook-form";
 import { useToast } from "../../context/ToastContext";
 import { API_BASE_URL } from "../../config";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function PostCreate() {
+  const navigate = useNavigate();
   const methods = useForm();
   const {
     register,
@@ -27,13 +29,16 @@ export function PostCreate() {
       // Append all fields except image
       Object.entries(data).forEach(([key, value]) => {
         if (key !== "image") {
-          if (typeof value === "object") {
+          if (key === "tags") {
+            const tagsVal = Array.isArray(value) ? value : [];
+            formData.append(key, JSON.stringify(tagsVal));
+          } else if (value === null || value === undefined) {
+            formData.append(key, "");
+          } else if (typeof value === "object") {
             formData.append(key, JSON.stringify(value));
           } else {
             formData.append(key, value);
           }
-
-          console.log(`Appending ${key}:`, JSON.stringify(value));
         }
       });
 
@@ -53,11 +58,12 @@ export function PostCreate() {
 
       if (result.success) {
         showToast("Post created successfully!", "success");
-        // Optionally reset form or redirect
+        navigate("/posts");
       } else {
         showToast(result.message || "Failed to create post.", "error");
       }
     } catch (error) {
+      console.error("Error submitting post:", error);
       showToast("Error submitting post: " + error.message, "error");
     }
     // Call your API here to post the data

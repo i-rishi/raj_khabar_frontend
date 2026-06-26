@@ -26,10 +26,9 @@ import BulkDeleteToolbar from "../../components/BulkDeleteToolbar/BulkDeleteTool
 import useBulkDelete from "../../hooks/useBulkDelete";
 
 // App theme colors
-const PRIMARY = "#800000";
-const SECONDARY = "#ffb6b6";
-const BG_GRADIENT = "linear-gradient(120deg, #f4f0e4 0%, #ffe0e0 100%)";
-const CARD_GRADIENT = "linear-gradient(135deg, #fff 60%, #ffe0e0 100%)";
+const PRIMARY = "#800000"; // Rich Crimson/Burgundy
+const SECONDARY = "#ffb6b6"; // Soft accent
+const BG_GRADIENT = "linear-gradient(135deg, #fcfbf9 0%, #f7f1e5 50%, #fbebeb 100%)";
 
 export function CardManagement() {
   const [cards, setCards] = useState([]);
@@ -103,7 +102,7 @@ export function CardManagement() {
       const data = await res.json();
       if (data.success) {
         showToast("Card deleted!", "success");
-        setCards((prev) => prev.filter((c) => c.slug !== deleteId));
+        setCards((prev) => prev.filter((c) => c._id !== deleteId));
       } else {
         showToast(data.message || "Failed to delete card", "error");
       }
@@ -124,7 +123,7 @@ export function CardManagement() {
       sx={{
         minHeight: "100vh",
         background: BG_GRADIENT,
-        px: { xs: 1, sm: 6 },
+        px: { xs: 2, sm: 6 },
         py: 6
       }}
     >
@@ -132,24 +131,37 @@ export function CardManagement() {
         direction="row"
         alignItems="center"
         justifyContent="space-between"
-        mb={2}
+        mb={4}
       >
         <Typography
           variant="h4"
-          sx={{ fontWeight: 900, color: PRIMARY, letterSpacing: 1 }}
+          sx={{
+            fontWeight: 900,
+            background: `linear-gradient(45deg, ${PRIMARY} 30%, #cc3333 90%)`,
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            letterSpacing: "0.5px"
+          }}
         >
           Card Management
         </Typography>
         <Button
           variant="contained"
           sx={{
-            background: `linear-gradient(90deg, ${PRIMARY} 60%, ${SECONDARY} 100%)`,
+            background: PRIMARY,
             color: "#fff",
             fontWeight: 700,
-            borderRadius: 3,
+            textTransform: "none",
+            borderRadius: "10px",
             px: 3,
-            boxShadow: `0 2px 12px ${SECONDARY}`,
-            "&:hover": { background: PRIMARY }
+            py: 1.25,
+            boxShadow: `0 4px 14px rgba(128, 0, 0, 0.25)`,
+            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+            "&:hover": {
+              background: "#600000",
+              boxShadow: `0 6px 20px rgba(128, 0, 0, 0.35)`,
+              transform: "translateY(-2px)"
+            }
           }}
           onClick={() => navigate("/card-create")}
         >
@@ -158,154 +170,254 @@ export function CardManagement() {
       </Stack>
 
       {selectedCount > 0 && (
-        <BulkDeleteToolbar
-          selectedCount={selectedCount}
-          totalCount={cards.length}
-          contentType="cards"
-          onSelectAll={handleSelectAll}
-          onClearSelection={clearSelection}
-          onBulkDelete={performBulkDelete}
-          isLoading={isBulkDeleting}
-        />
+        <Box mb={3}>
+          <BulkDeleteToolbar
+            selectedCount={selectedCount}
+            totalCount={cards.length}
+            contentType="cards"
+            onSelectAll={handleSelectAll}
+            onClearSelection={clearSelection}
+            onBulkDelete={performBulkDelete}
+            isLoading={isBulkDeleting}
+          />
+        </Box>
       )}
 
       <Fade in>
-        <Grid container spacing={4}>
+        <Grid container spacing={3}>
           {loading ? (
             <Grid item xs={12}>
-              <Typography align="center" sx={{ color: PRIMARY }}>
+              <Typography align="center" sx={{ color: PRIMARY, py: 8, fontWeight: 600 }}>
                 Loading cards...
               </Typography>
             </Grid>
           ) : cards.length === 0 ? (
             <Grid item xs={12}>
-              <Typography align="center" sx={{ color: PRIMARY }}>
+              <Typography align="center" sx={{ color: PRIMARY, py: 8, fontWeight: 600 }}>
                 No cards found.
               </Typography>
             </Grid>
           ) : (
             cards.map((card) => (
-              <Grid item xs={12} sm={6} md={4} key={card.slug}>
+              <Grid item xs={12} sm={6} md={4} key={card._id}>
                 <Card
-                  elevation={8}
+                  elevation={0}
                   sx={{
-                    borderRadius: 5,
-                    background: CARD_GRADIENT,
-                    boxShadow: `0 8px 32px ${PRIMARY}22`,
-                    minHeight: 260,
+                    borderRadius: "16px",
+                    background: "rgba(255, 255, 255, 0.85)",
+                    backdropFilter: "blur(8px)",
+                    border: "1px solid rgba(128, 0, 0, 0.08)",
+                    boxShadow: "0 10px 30px rgba(128, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.01)",
+                    minHeight: 280,
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
-                    transition: "box-shadow 0.3s",
-                    "&:hover": { boxShadow: `0 12px 36px ${SECONDARY}` }
+                    position: "relative",
+                    overflow: "hidden",
+                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    "&:hover": {
+                      transform: "translateY(-6px)",
+                      boxShadow: "0 20px 40px rgba(128, 0, 0, 0.08)",
+                      borderColor: "rgba(128, 0, 0, 0.2)"
+                    }
                   }}
                 >
-                  <CardContent onClick={() => toggleSelection(card._id)} sx={{ cursor: 'pointer' }}>
+                  <CardContent
+                    onClick={() => toggleSelection(card._id)}
+                    sx={{ cursor: 'pointer', p: 3, "&:last-child": { pb: 3 } }}
+                  >
                     <Stack
                       direction="row"
                       alignItems="center"
                       spacing={1}
-                      mb={1}
+                      mb={2}
                     >
                       <Checkbox
                         checked={isSelected(card._id)}
-                        onChange={() => toggleSelection(card._id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggleSelection(card._id);
+                        }}
                         sx={{
-                          color: PRIMARY,
+                          color: "rgba(128, 0, 0, 0.4)",
+                          p: 0,
+                          mr: 0.5,
                           '&.Mui-checked': { color: PRIMARY },
                         }}
                       />
                       <Chip
                         label={card.parentSlug}
-                        color="primary"
                         size="small"
                         sx={{
-                          fontWeight: 600,
-                          bgcolor: PRIMARY,
-                          color: "#fff"
+                          fontWeight: 700,
+                          fontSize: "0.68rem",
+                          textTransform: "uppercase",
+                          bgcolor: "rgba(128, 0, 0, 0.06)",
+                          color: PRIMARY,
+                          borderRadius: "6px",
+                          border: "1px solid rgba(128, 0, 0, 0.1)",
+                          height: 22
                         }}
                       />
                       <Chip
                         label={card.subCategorySlug}
-                        color="secondary"
                         size="small"
                         sx={{
-                          fontWeight: 600,
-                          bgcolor: SECONDARY,
-                          color: PRIMARY
+                          fontWeight: 700,
+                          fontSize: "0.68rem",
+                          textTransform: "uppercase",
+                          bgcolor: "rgba(255, 182, 182, 0.25)",
+                          color: "#990000",
+                          borderRadius: "6px",
+                          border: "1px solid rgba(255, 182, 182, 0.4)",
+                          height: 22
                         }}
                       />
                     </Stack>
+
                     <Typography
                       variant="h6"
                       sx={{
                         fontWeight: 800,
                         color: PRIMARY,
                         mb: 1,
-                        letterSpacing: 1
+                        lineHeight: 1.3
                       }}
                     >
                       {card.cardHeading}
                     </Typography>
+
                     <Typography
-                      sx={{ color: SECONDARY, fontWeight: 600, mb: 0.5 }}
+                      sx={{
+                        color: "rgba(128, 0, 0, 0.8)",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        mb: 1
+                      }}
                     >
                       {card.topField}
                     </Typography>
-                    <Typography sx={{ color: "#333", mb: 1 }}>
+
+                    <Typography
+                      sx={{
+                        color: "#4a4a4a",
+                        fontSize: "0.9rem",
+                        lineHeight: 1.5,
+                        mb: 2,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden"
+                      }}
+                    >
                       {card.middleField}
                     </Typography>
+
                     {card.link && card.link.link && (
                       <MuiLink
                         href={card.link.link}
                         target="_blank"
                         rel="noopener noreferrer"
                         underline="none"
+                        onClick={(e) => e.stopPropagation()}
                         sx={{
                           display: "inline-flex",
                           alignItems: "center",
-                          color: PRIMARY,
-                          fontWeight: 700,
-                          mt: 1,
+                          color: "#fff",
+                          bgcolor: PRIMARY,
+                          borderRadius: "8px",
+                          px: 2,
+                          py: 0.75,
+                          fontSize: "0.82rem",
+                          fontWeight: 600,
+                          boxShadow: "0 4px 12px rgba(128, 0, 0, 0.15)",
+                          transition: "all 0.2s ease",
                           "&:hover": {
-                            textDecoration: "underline",
-                            color: SECONDARY
+                            bgcolor: "#600000",
+                            transform: "scale(1.03)",
+                            boxShadow: "0 6px 16px rgba(128, 0, 0, 0.25)"
                           }
                         }}
                       >
-                        <Download sx={{ mr: 0.5 }} fontSize="small" />
+                        <Download sx={{ mr: 0.5, fontSize: 16 }} />
                         Download
                         {card.link.link_type === "external" && (
-                          <OpenInNew sx={{ ml: 0.5 }} fontSize="small" />
+                          <OpenInNew sx={{ ml: 0.5, fontSize: 14 }} />
                         )}
                       </MuiLink>
                     )}
                   </CardContent>
+
                   <CardActions
-                    sx={{ justifyContent: "space-between", pb: 2, pr: 2 }}
+                    sx={{
+                      justifyContent: "space-between",
+                      pb: 2,
+                      px: 3,
+                      borderTop: "1px solid rgba(128, 0, 0, 0.06)",
+                      mt: "auto",
+                      background: "rgba(128, 0, 0, 0.01)"
+                    }}
                   >
                     <Chip
                       label={isSelected(card._id) ? 'Selected' : ''}
                       size="small"
-                      sx={{ visibility: isSelected(card._id) ? 'visible' : 'hidden', bgcolor: SECONDARY, color: PRIMARY }}
+                      sx={{
+                        visibility: isSelected(card._id) ? 'visible' : 'hidden',
+                        bgcolor: "rgba(128, 0, 0, 0.08)",
+                        color: PRIMARY,
+                        fontWeight: 700,
+                        fontSize: "0.72rem",
+                        borderRadius: "6px",
+                        height: 22
+                      }}
                     />
-                    <Tooltip title="Edit">
-                      <IconButton
-                        sx={{ color: PRIMARY }}
-                        onClick={() => navigate(`/card-edit/${card.slug}`)}
-                      >
-                        <Edit />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        sx={{ color: SECONDARY }}
-                        onClick={() => handleDelete(card._id)}
-                        disabled={isBulkDeleting}
-                      >
-                        <Delete />
-                      </IconButton>
-                    </Tooltip>
+                    <Stack direction="row" spacing={1}>
+                      <Tooltip title="Edit">
+                        <IconButton
+                          sx={{
+                            color: PRIMARY,
+                            bgcolor: "rgba(128, 0, 0, 0.04)",
+                            p: 1,
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              color: "#fff",
+                              bgcolor: PRIMARY,
+                              transform: "translateY(-2px)"
+                            }
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/card-edit/${card.slug}`);
+                          }}
+                        >
+                          <Edit sx={{ fontSize: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          sx={{
+                            color: "#d32f2f",
+                            bgcolor: "rgba(211, 47, 47, 0.04)",
+                            p: 1,
+                            transition: "all 0.2s ease",
+                            "&:hover": {
+                              color: "#fff",
+                              bgcolor: "#d32f2f",
+                              transform: "translateY(-2px)"
+                            }
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(card._id);
+                          }}
+                          disabled={isBulkDeleting}
+                        >
+                          <Delete sx={{ fontSize: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
                   </CardActions>
                 </Card>
               </Grid>

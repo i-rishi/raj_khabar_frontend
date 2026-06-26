@@ -330,7 +330,7 @@ export function PostTable({ posts, onView, onEdit, onDelete, onAddPost }) {
                     return textResult.trim();
                   }
 
-                  // If it's a string containing escaped HTML like &lt;p&gt; 
+                  // If it's a string containing escaped HTML like &lt;p&gt;
                   // or normal HTML like <p>
                   // We can decode and extract text
                   if (typeof content === "string") {

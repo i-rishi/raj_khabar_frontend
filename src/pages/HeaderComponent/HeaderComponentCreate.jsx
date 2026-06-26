@@ -170,7 +170,6 @@ export function HeaderComponentCreate() {
       >
         <MenuItem value="web-view">Web View</MenuItem>
         <MenuItem value="external">External</MenuItem>
-        <MenuItem value="internal">Internal</MenuItem>
         <MenuItem value="pdf">PDF</MenuItem>
       </TextField>
       <TextField

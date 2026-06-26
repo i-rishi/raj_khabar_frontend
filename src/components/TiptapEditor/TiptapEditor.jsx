@@ -211,7 +211,9 @@ export default function TiptapEditor({ onChange, initialContent }) {
       ResizeImage,
       TextStyle,
       Color,
-      Highlight,
+      Highlight.configure({
+        multicolor: true,
+      }),
       FontFamily,
       FontSize,
       Heading.configure({
@@ -736,10 +738,9 @@ export default function TiptapEditor({ onChange, initialContent }) {
         >
           <SketchPicker
             color={currentColor}
-            onChangeComplete={(color) => {
+            onChange={(color) => {
               setCurrentColor(color.hex);
               editor?.chain().focus().setColor(color.hex).run();
-              3;
             }}
           />
         </Box>
@@ -754,11 +755,9 @@ export default function TiptapEditor({ onChange, initialContent }) {
         >
           <ChromePicker
             color={currentHighlightColor}
-            onChangeComplete={(color) => {
+            onChange={(color) => {
               setCurrentHighlightColor(color.hex);
               editor?.chain().focus().setHighlight({ color: color.hex }).run();
-              3;
-              3;
             }}
           />
         </Box>

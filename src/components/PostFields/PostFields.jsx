@@ -57,7 +57,11 @@ export function PostFields({ register, errors, watch, setValue, post }) {
 
   useEffect(() => {
     const formTags = watch("tags");
-    if (Array.isArray(formTags)) setTags(formTags);
+    if (Array.isArray(formTags)) {
+      setTags(formTags);
+    } else {
+      setTags([]);
+    }
   }, [watch("tags")]);
 
   const handleTitleChange = (e) => {

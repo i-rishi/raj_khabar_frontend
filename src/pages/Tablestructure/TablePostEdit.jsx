@@ -351,7 +351,6 @@ export function TablePostEdit() {
                           sx={{ background: "#fff" }}
                         >
                           <MenuItem value="external">External</MenuItem>
-                          <MenuItem value="internal">Internal</MenuItem>
                           <MenuItem value="pdf">PDF</MenuItem>
                           <MenuItem value="web-view">Web View</MenuItem>
                         </Select>

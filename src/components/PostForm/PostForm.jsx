@@ -1,11 +1,12 @@
-/* eslint-disable no-unused-vars */
 // /components/PostForm/PostForm.jsx
 import { useFormContext, Controller } from "react-hook-form";
 import { Box, Button, Paper } from "@mui/material";
 import { PostFields } from "../PostFields/PostFields";
 import { useToast } from "../../context/ToastContext";
+import { useNavigate } from "react-router-dom";
 
 export function PostForm({ onSubmit, post }) {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -32,7 +33,7 @@ export function PostForm({ onSubmit, post }) {
           setValue={setValue}
           post={post}
         />
-        <Box sx={{ mt: 3 }}>
+        <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
           <Button
             variant="contained"
             type="submit"
@@ -43,7 +44,21 @@ export function PostForm({ onSubmit, post }) {
               },
             }}
           >
-            Submit Post
+            {post ? "Update Post" : "Submit Post"}
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => navigate("/posts")}
+            sx={{
+              color: "#800000",
+              borderColor: "#800000",
+              "&:hover": {
+                borderColor: "#600000",
+                backgroundColor: "rgba(128, 0, 0, 0.04)",
+              },
+            }}
+          >
+            Cancel
           </Button>
         </Box>
       </form>

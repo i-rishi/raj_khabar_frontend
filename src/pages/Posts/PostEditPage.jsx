@@ -1,7 +1,6 @@
-/* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { PostForm } from "../../components/PostForm/PostForm";
 import { API_BASE_URL } from "../../config";
 import { CircularProgress, Box } from "@mui/material";
@@ -10,6 +9,7 @@ import { FormProvider } from "react-hook-form";
 
 export function PostEditPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -98,13 +98,16 @@ export function PostEditPage() {
       // Append all fields except image
       Object.entries(data).forEach(([key, value]) => {
         if (key !== "image") {
-          if (typeof value === "object") {
+          if (key === "tags") {
+            const tagsVal = Array.isArray(value) ? value : [];
+            formData.append(key, JSON.stringify(tagsVal));
+          } else if (value === null || value === undefined) {
+            formData.append(key, "");
+          } else if (typeof value === "object") {
             formData.append(key, JSON.stringify(value));
           } else {
             formData.append(key, value);
           }
-
-          console.log(`Appending ${key}:`, JSON.stringify(value));
         }
       });
 
@@ -118,13 +121,15 @@ export function PostEditPage() {
         credentials: "include",
       });
       const result = await res.json();
+      console.log("Edit Post Response:", result);
       if (result.success) {
         showToast("Post updated successfully!", "success");
-        // Optionally redirect or update UI
+        navigate("/posts");
       } else {
         showToast(result.message || "Failed to update post.", "error");
       }
     } catch (err) {
+      console.error("Error updating post:", err);
       showToast("Error updating post.", "error");
     }
   };
