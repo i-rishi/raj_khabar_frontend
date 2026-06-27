@@ -431,6 +431,13 @@ export function MainCategoryAllData() {
                       variant="subtitle2"
                       color="#800000"
                       fontWeight={700}
+                      sx={{
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis"
+                      }}
                     >
                       {card.cardHeading}
                     </Typography>

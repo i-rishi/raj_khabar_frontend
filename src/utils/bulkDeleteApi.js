@@ -39,7 +39,7 @@ export const bulkDeleteApi = {
   // Delete cards
   deleteCards: async (ids) => {
     try {
-      const response = await apiClient.delete('/api/bulk-delete/cards', {
+      const response = await apiClient.delete('/api/card/bulk-delete', {
         data: { ids },
       });
       return response.data;

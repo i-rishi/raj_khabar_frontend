@@ -14,7 +14,13 @@ import {
   IconButton,
   Tooltip,
   Fade,
-  Link as MuiLink
+  Link as MuiLink,
+  TablePagination,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from "@mui/material";
 import { Download, Edit, Delete, OpenInNew } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config";
@@ -24,6 +30,7 @@ import { ConfirmDialog } from "../../components/Dialog/Dialog";
 import Checkbox from "@mui/material/Checkbox";
 import BulkDeleteToolbar from "../../components/BulkDeleteToolbar/BulkDeleteToolbar";
 import useBulkDelete from "../../hooks/useBulkDelete";
+import { useCategories } from "../../context/CategoryContext";
 
 // App theme colors
 const PRIMARY = "#800000"; // Rich Crimson/Burgundy
@@ -31,10 +38,20 @@ const SECONDARY = "#ffb6b6"; // Soft accent
 const BG_GRADIENT = "linear-gradient(135deg, #fcfbf9 0%, #f7f1e5 50%, #fbebeb 100%)";
 
 export function CardManagement() {
-  const [cards, setCards] = useState([]);
-  const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const { categories, subcategories, loadSubcategories } = useCategories();
+
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Pagination and filter states
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(12);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
 
   // Dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -59,21 +76,42 @@ export function CardManagement() {
     (err) => showToast(err?.message || 'Failed to delete selected cards', 'error')
   );
 
+  // Load subcategories when category changes
+  useEffect(() => {
+    if (selectedCategory) {
+      loadSubcategories(selectedCategory);
+      setSelectedSubcategory(""); // reset subcategory on category change
+    }
+    // eslint-disable-next-line
+  }, [selectedCategory]);
+
   // Fetch cards from backend
   const fetchCards = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/card/get-all-card-posts`, {
+      let url = "";
+      if (selectedCategory && selectedSubcategory) {
+        url = `${API_BASE_URL}/api/card/category/${selectedCategory}/subcategory/${selectedSubcategory}?page=${
+          page + 1
+        }&limit=${rowsPerPage}&search=${encodeURIComponent(search)}`;
+      } else {
+        url = `${API_BASE_URL}/api/card/get-all-card-posts?page=${
+          page + 1
+        }&limit=${rowsPerPage}&search=${encodeURIComponent(search)}`;
+      }
+
+      const res = await fetch(url, {
         credentials: "include"
       });
       const data = await res.json();
       if (data.success) {
         setCards(data.data || []);
+        setTotal(data.total || 0);
       } else {
         showToast(data.message || "Failed to fetch cards", "error");
       }
     } catch (error) {
-      showToast("Error fetching cards", error);
+      showToast("Error fetching cards", "error");
     }
     setLoading(false);
   };
@@ -81,7 +119,7 @@ export function CardManagement() {
   useEffect(() => {
     fetchCards();
     // eslint-disable-next-line
-  }, []);
+  }, [page, rowsPerPage, search, selectedCategory, selectedSubcategory]);
 
   const handleSelectAll = () => {
     selectAll(cards.map((c) => c._id));
@@ -128,8 +166,9 @@ export function CardManagement() {
       }}
     >
       <Stack
-        direction="row"
-        alignItems="center"
+        direction={{ xs: "column", md: "row" }}
+        spacing={2}
+        alignItems={{ xs: "stretch", md: "center" }}
         justifyContent="space-between"
         mb={4}
       >
@@ -140,33 +179,104 @@ export function CardManagement() {
             background: `linear-gradient(45deg, ${PRIMARY} 30%, #cc3333 90%)`,
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            letterSpacing: "0.5px"
+            letterSpacing: "0.5px",
+            minWidth: "fit-content"
           }}
         >
           Card Management
         </Typography>
-        <Button
-          variant="contained"
-          sx={{
-            background: PRIMARY,
-            color: "#fff",
-            fontWeight: 700,
-            textTransform: "none",
-            borderRadius: "10px",
-            px: 3,
-            py: 1.25,
-            boxShadow: `0 4px 14px rgba(128, 0, 0, 0.25)`,
-            transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-            "&:hover": {
-              background: "#600000",
-              boxShadow: `0 6px 20px rgba(128, 0, 0, 0.35)`,
-              transform: "translateY(-2px)"
-            }
-          }}
-          onClick={() => navigate("/card-create")}
+
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          alignItems="center"
+          justifyContent="flex-end"
+          sx={{ width: "100%" }}
         >
-          + Create Card
-        </Button>
+          <FormControl
+            size="small"
+            sx={{ minWidth: 150, background: "#fff", borderRadius: "8px" }}
+          >
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={selectedCategory}
+              label="Category"
+              onChange={(e) => {
+                setSelectedCategory(e.target.value);
+                setPage(0);
+              }}
+            >
+              <MenuItem value="">
+                <em>All</em>
+              </MenuItem>
+              {categories.map((cat) => (
+                <MenuItem key={cat.slug} value={cat.slug}>
+                  {cat.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl
+            size="small"
+            sx={{ minWidth: 170, background: "#fff", borderRadius: "8px" }}
+            disabled={!selectedCategory}
+          >
+            <InputLabel>Subcategory</InputLabel>
+            <Select
+              value={selectedSubcategory}
+              label="Subcategory"
+              onChange={(e) => {
+                setSelectedSubcategory(e.target.value);
+                setPage(0);
+              }}
+            >
+              <MenuItem value="">
+                <em>All</em>
+              </MenuItem>
+              {(subcategories[selectedCategory] || []).map((sub) => (
+                <MenuItem key={sub.slug} value={sub.slug}>
+                  {sub.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <TextField
+            label="Search Cards"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+            size="small"
+            sx={{ minWidth: 200, background: "#fff", borderRadius: "8px" }}
+          />
+
+          <Button
+            variant="contained"
+            sx={{
+              background: PRIMARY,
+              color: "#fff",
+              fontWeight: 700,
+              textTransform: "none",
+              borderRadius: "10px",
+              px: 3,
+              py: 1.25,
+              whiteSpace: "nowrap",
+              boxShadow: `0 4px 14px rgba(128, 0, 0, 0.25)`,
+              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+              "&:hover": {
+                background: "#600000",
+                boxShadow: `0 6px 20px rgba(128, 0, 0, 0.35)`,
+                transform: "translateY(-2px)"
+              }
+            }}
+            onClick={() => navigate("/card-create")}
+          >
+            + Create Card
+          </Button>
+        </Stack>
       </Stack>
 
       {selectedCount > 0 && (
@@ -186,20 +296,20 @@ export function CardManagement() {
       <Fade in>
         <Grid container spacing={3}>
           {loading ? (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Typography align="center" sx={{ color: PRIMARY, py: 8, fontWeight: 600 }}>
                 Loading cards...
               </Typography>
             </Grid>
           ) : cards.length === 0 ? (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Typography align="center" sx={{ color: PRIMARY, py: 8, fontWeight: 600 }}>
                 No cards found.
               </Typography>
             </Grid>
           ) : (
             cards.map((card) => (
-              <Grid item xs={12} sm={6} md={4} key={card._id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={card._id}>
                 <Card
                   elevation={0}
                   sx={{
@@ -234,8 +344,10 @@ export function CardManagement() {
                     >
                       <Checkbox
                         checked={isSelected(card._id)}
-                        onChange={(e) => {
+                        onClick={(e) => {
                           e.stopPropagation();
+                        }}
+                        onChange={() => {
                           toggleSelection(card._id);
                         }}
                         sx={{
@@ -276,12 +388,17 @@ export function CardManagement() {
                     </Stack>
 
                     <Typography
-                      variant="h6"
+                      variant="h7"
                       sx={{
                         fontWeight: 800,
                         color: PRIMARY,
                         mb: 1,
-                        lineHeight: 1.3
+                        lineHeight: 1.3,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis"
                       }}
                     >
                       {card.cardHeading}
@@ -425,6 +542,28 @@ export function CardManagement() {
           )}
         </Grid>
       </Fade>
+
+      <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end" }}>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={[6, 12, 24, 48]}
+          sx={{
+            background: "rgba(255, 255, 255, 0.85)",
+            backdropFilter: "blur(8px)",
+            borderRadius: "12px",
+            border: "1px solid rgba(128, 0, 0, 0.08)",
+            boxShadow: "0 4px 12px rgba(128, 0, 0, 0.03)"
+          }}
+        />
+      </Box>
       <ConfirmDialog
         open={deleteDialogOpen}
         title="Delete Card"

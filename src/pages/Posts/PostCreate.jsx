@@ -54,7 +54,6 @@ export function PostCreate() {
       });
 
       const result = await response.json();
-      console.log("Response:", result);
 
       if (result.success) {
         showToast("Post created successfully!", "success");
