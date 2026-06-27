@@ -6,11 +6,17 @@ import { useForm, FormProvider } from "react-hook-form";
 import { useToast } from "../../context/ToastContext";
 import { API_BASE_URL } from "../../config";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export function PostCreate() {
   const navigate = useNavigate();
-  const methods = useForm();
+  const location = useLocation();
+  const methods = useForm({
+    defaultValues: {
+      categoryslug: location.state?.category || "",
+      subcategoryslug: location.state?.subcategory || ""
+    }
+  });
   const {
     register,
     handleSubmit,
@@ -57,7 +63,7 @@ export function PostCreate() {
 
       if (result.success) {
         showToast("Post created successfully!", "success");
-        navigate("/posts");
+        navigate("/posts", { state: location.state });
       } else {
         showToast(result.message || "Failed to create post.", "error");
       }

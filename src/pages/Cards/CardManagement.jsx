@@ -24,7 +24,7 @@ import {
 } from "@mui/material";
 import { Download, Edit, Delete, OpenInNew } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../../context/ToastContext";
 import { ConfirmDialog } from "../../components/Dialog/Dialog";
 import Checkbox from "@mui/material/Checkbox";
@@ -40,18 +40,20 @@ const BG_GRADIENT = "linear-gradient(135deg, #fcfbf9 0%, #f7f1e5 50%, #fbebeb 10
 export function CardManagement() {
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { categories, subcategories, loadSubcategories } = useCategories();
 
   const [cards, setCards] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Pagination and filter states
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(12);
+  const [page, setPage] = useState(location.state?.page || 0);
+  const [rowsPerPage, setRowsPerPage] = useState(location.state?.rowsPerPage || 12);
   const [total, setTotal] = useState(0);
-  const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [search, setSearch] = useState(location.state?.search || "");
+  const [selectedCategory, setSelectedCategory] = useState(location.state?.category || "");
+  const [selectedSubcategory, setSelectedSubcategory] = useState(location.state?.subcategory || "");
+  const [prevCategory, setPrevCategory] = useState(location.state?.category || "");
 
   // Dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -80,7 +82,12 @@ export function CardManagement() {
   useEffect(() => {
     if (selectedCategory) {
       loadSubcategories(selectedCategory);
-      setSelectedSubcategory(""); // reset subcategory on category change
+      if (selectedCategory !== prevCategory) {
+        setSelectedSubcategory(""); // reset subcategory on category change
+        setPrevCategory(selectedCategory);
+      }
+    } else {
+      setPrevCategory("");
     }
     // eslint-disable-next-line
   }, [selectedCategory]);
@@ -265,7 +272,15 @@ export function CardManagement() {
                 transform: "translateY(-2px)"
               }
             }}
-            onClick={() => navigate("/card-create")}
+            onClick={() => navigate("/card-create", {
+              state: {
+                page,
+                search,
+                category: selectedCategory,
+                subcategory: selectedSubcategory,
+                rowsPerPage
+              }
+            })}
           >
             + Create Card
           </Button>
@@ -499,7 +514,15 @@ export function CardManagement() {
                           }}
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/card-edit/${card.slug}`);
+                            navigate(`/card-edit/${card.slug}`, {
+                              state: {
+                                page,
+                                search,
+                                category: selectedCategory,
+                                subcategory: selectedSubcategory,
+                                rowsPerPage
+                              }
+                            });
                           }}
                         >
                           <Edit sx={{ fontSize: 18 }} />

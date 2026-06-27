@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { PostForm } from "../../components/PostForm/PostForm";
 import { API_BASE_URL } from "../../config";
 import { CircularProgress, Box } from "@mui/material";
@@ -10,6 +10,7 @@ import { FormProvider } from "react-hook-form";
 export function PostEditPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -124,7 +125,7 @@ export function PostEditPage() {
       console.log("Edit Post Response:", result);
       if (result.success) {
         showToast("Post updated successfully!", "success");
-        navigate("/posts");
+        navigate("/posts", { state: location.state });
       } else {
         showToast(result.message || "Failed to update post.", "error");
       }

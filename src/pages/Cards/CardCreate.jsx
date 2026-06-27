@@ -16,10 +16,11 @@ import {
 import { Add as AddIcon, Link as LinkIcon } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCategories } from "../../context/CategoryContext";
 
 export function CardCreate() {
+  const location = useLocation();
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -27,8 +28,8 @@ export function CardCreate() {
     cardHeading: "",
     middleField: "",
     link: { link: "", link_type: "external" }, // <-- update downloadLink to link
-    parentSlug: "",
-    subCategorySlug: ""
+    parentSlug: location.state?.category || "",
+    subCategorySlug: location.state?.subcategory || ""
   });
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
@@ -36,12 +37,18 @@ export function CardCreate() {
 
   // Use category context
   const { categories, subcategories, loadSubcategories } = useCategories();
+  const [prevParentSlug, setPrevParentSlug] = useState(location.state?.category || "");
 
   // Load subcategories when category changes
   useEffect(() => {
     if (form.parentSlug) {
       loadSubcategories(form.parentSlug);
-      setForm((prev) => ({ ...prev, subCategorySlug: "" })); // Reset subcategory on category change
+      if (form.parentSlug !== prevParentSlug) {
+        setForm((prev) => ({ ...prev, subCategorySlug: "" })); // Reset subcategory on category change
+        setPrevParentSlug(form.parentSlug);
+      }
+    } else {
+      setPrevParentSlug("");
     }
     // eslint-disable-next-line
   }, [form.parentSlug]);
@@ -92,7 +99,7 @@ export function CardCreate() {
       const data = await res.json();
       if (data.success) {
         showToast("Card created successfully!", "success");
-        navigate("/card-management");
+        navigate("/card-management", { state: location.state });
       } else {
         showToast(data.message || "Failed to create card", "error");
       }
@@ -261,27 +268,49 @@ export function CardCreate() {
                 </Select>
               </FormControl>
             </Stack>
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              sx={{
-                mt: 2,
-                background: "linear-gradient(90deg, #800000 60%, #ffb6b6 100%)",
-                color: "#fffaf5",
-                fontWeight: 700,
-                letterSpacing: 1,
-                py: 1.3,
-                borderRadius: 3,
-                fontSize: "1.1rem",
-                boxShadow: "0 2px 12px #ffe0e0",
-                "&:hover": { background: "#4d0000" }
-              }}
-              startIcon={<AddIcon />}
-              disabled={loading}
-            >
-              {loading ? "Creating..." : "Create Card"}
-            </Button>
+            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+              <Button
+                variant="outlined"
+                fullWidth
+                sx={{
+                  borderColor: "#800000",
+                  color: "#800000",
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  py: 1.3,
+                  borderRadius: 3,
+                  fontSize: "1.1rem",
+                  "&:hover": {
+                    borderColor: "#4d0000",
+                    background: "rgba(128, 0, 0, 0.04)"
+                  }
+                }}
+                onClick={() => navigate("/card-management", { state: location.state })}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                sx={{
+                  background: "linear-gradient(90deg, #800000 60%, #ffb6b6 100%)",
+                  color: "#fffaf5",
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  py: 1.3,
+                  borderRadius: 3,
+                  fontSize: "1.1rem",
+                  boxShadow: "0 2px 12px #ffe0e0",
+                  "&:hover": { background: "#4d0000" }
+                }}
+                startIcon={<AddIcon />}
+                disabled={loading}
+              >
+                {loading ? "Creating..." : "Create Card"}
+              </Button>
+            </Stack>
           </Stack>
         </form>
       </Paper>

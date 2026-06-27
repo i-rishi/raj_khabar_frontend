@@ -16,11 +16,12 @@ import {
 import { Edit as EditIcon, Link as LinkIcon } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useCategories } from "../../context/CategoryContext";
 
 export function CardEdit() {
   const { slug } = useParams();
+  const location = useLocation();
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -67,11 +68,11 @@ export function CardEdit() {
           }
         } else {
           showToast(data.message || "Failed to fetch card", "error");
-          navigate("/card-management");
+          navigate("/card-management", { state: location.state });
         }
       } catch (error) {
         showToast("Error fetching card", error);
-        navigate("/card-management");
+        navigate("/card-management", { state: location.state });
       }
       setLoading(false);
     }
@@ -134,7 +135,7 @@ export function CardEdit() {
       const data = await res.json();
       if (data.success) {
         showToast("Card updated successfully!", "success");
-        navigate("/card-management");
+        navigate("/card-management", { state: location.state });
       } else {
         showToast(data.message || "Failed to update card", "error");
       }
@@ -318,27 +319,49 @@ export function CardEdit() {
                 </Select>
               </FormControl>
             </Stack>
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              sx={{
-                mt: 2,
-                background: "linear-gradient(90deg, #800000 60%, #ffb6b6 100%)",
-                color: "#fffaf5",
-                fontWeight: 700,
-                letterSpacing: 1,
-                py: 1.3,
-                borderRadius: 3,
-                fontSize: "1.1rem",
-                boxShadow: "0 2px 12px #ffe0e0",
-                "&:hover": { background: "#4d0000" }
-              }}
-              startIcon={<EditIcon />}
-              disabled={updating}
-            >
-              {updating ? "Updating..." : "Update Card"}
-            </Button>
+            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+              <Button
+                variant="outlined"
+                fullWidth
+                sx={{
+                  borderColor: "#800000",
+                  color: "#800000",
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  py: 1.3,
+                  borderRadius: 3,
+                  fontSize: "1.1rem",
+                  "&:hover": {
+                    borderColor: "#4d0000",
+                    background: "rgba(128, 0, 0, 0.04)"
+                  }
+                }}
+                onClick={() => navigate("/card-management", { state: location.state })}
+                disabled={updating}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                sx={{
+                  background: "linear-gradient(90deg, #800000 60%, #ffb6b6 100%)",
+                  color: "#fffaf5",
+                  fontWeight: 700,
+                  letterSpacing: 1,
+                  py: 1.3,
+                  borderRadius: 3,
+                  fontSize: "1.1rem",
+                  boxShadow: "0 2px 12px #ffe0e0",
+                  "&:hover": { background: "#4d0000" }
+                }}
+                startIcon={<EditIcon />}
+                disabled={updating}
+              >
+                {updating ? "Updating..." : "Update Card"}
+              </Button>
+            </Stack>
           </Stack>
         </form>
       </Paper>

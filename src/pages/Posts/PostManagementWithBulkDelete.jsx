@@ -27,7 +27,7 @@ import {
   Delete as DeleteIcon
 } from "@mui/icons-material";
 import { CircularProgress } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../../context/ToastContext";
 import { API_BASE_URL } from "../../config";
 import { useCategories } from "../../context/CategoryContext";
@@ -38,19 +38,22 @@ import BulkDeleteToolbar from "../../components/BulkDeleteToolbar/BulkDeleteTool
 import useBulkDelete from "../../hooks/useBulkDelete";
 
 export default function PostManagementWithBulkDelete() {
-  const [posts, setPosts] = useState([]);
-  const [status, setStatus] = useState("");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0); // 0-indexed for TablePagination
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
 
+  const [posts, setPosts] = useState([]);
+  const [status, setStatus] = useState(location.state?.status || "");
+  const [search, setSearch] = useState(location.state?.search || "");
+  const [page, setPage] = useState(location.state?.page || 0); // 0-indexed for TablePagination
+  const [rowsPerPage, setRowsPerPage] = useState(location.state?.rowsPerPage || 10);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+
   const { categories, subcategories, loadSubcategories } = useCategories();
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(location.state?.category || "");
+  const [selectedSubcategory, setSelectedSubcategory] = useState(location.state?.subcategory || "");
+  const [prevCategory, setPrevCategory] = useState(location.state?.category || "");
 
   // Initialize bulk delete hook
   const {
@@ -85,11 +88,18 @@ export default function PostManagementWithBulkDelete() {
   useEffect(() => {
     if (selectedCategory) {
       loadSubcategories(selectedCategory);
-      setSelectedSubcategory("");
+      if (selectedCategory !== prevCategory) {
+        setSelectedSubcategory("");
+        setPrevCategory(selectedCategory);
+        setPage(0);
+      }
     } else {
-      setSelectedSubcategory("");
+      if (selectedCategory !== prevCategory) {
+        setSelectedSubcategory("");
+        setPrevCategory("");
+        setPage(0);
+      }
     }
-    setPage(0);
     // eslint-disable-next-line
   }, [selectedCategory]);
 
@@ -181,7 +191,16 @@ export default function PostManagementWithBulkDelete() {
             fontWeight: 600,
             "&:hover": { background: "#4d0000" }
           }}
-          onClick={() => navigate("/dashboard/create-post")}
+          onClick={() => navigate("/dashboard/create-post", {
+            state: {
+              page,
+              search,
+              status,
+              category: selectedCategory,
+              subcategory: selectedSubcategory,
+              rowsPerPage
+            }
+          })}
         >
           Create Post
         </Button>
@@ -417,7 +436,16 @@ export default function PostManagementWithBulkDelete() {
                     <TableCell>
                       <IconButton
                         color="primary"
-                        onClick={() => navigate(`/posts/edit/${post._id}`)}
+                        onClick={() => navigate(`/posts/edit/${post._id}`, {
+                          state: {
+                            page,
+                            search,
+                            status,
+                            category: selectedCategory,
+                            subcategory: selectedSubcategory,
+                            rowsPerPage
+                          }
+                        })}
                         disabled={isBulkDeleting}
                       >
                         <EditIcon />

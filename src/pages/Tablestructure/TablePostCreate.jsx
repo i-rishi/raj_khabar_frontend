@@ -32,7 +32,7 @@ import {
 import { useCategories } from "../../context/CategoryContext";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const steps = [
   { label: "Basic Info", icon: <Category /> },
@@ -45,12 +45,13 @@ export function TablePostCreate() {
   const { categories, subcategories, loadSubcategories } = useCategories();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [form, setForm] = useState({
     name: "",
     slug: "",
-    parentSlug: "",
-    subcategorySlug: "",
+    parentSlug: location.state?.category || "",
+    subcategorySlug: location.state?.subcategory || "",
     tableStructureSlug: "",
     rowData: []
   });
@@ -82,6 +83,20 @@ export function TablePostCreate() {
       loadSubcategories(form.parentSlug);
     }
   }, [form.parentSlug, loadSubcategories]);
+
+  // Auto-resolve tableStructureSlug when subcategories/structures are loaded
+  useEffect(() => {
+    if (form.parentSlug && form.subcategorySlug && tableStructures.length > 0) {
+      const subList = subcategories[form.parentSlug] || [];
+      const selectedSub = subList.find((sub) => sub.slug === form.subcategorySlug);
+      if (selectedSub && !form.tableStructureSlug) {
+        setForm((prev) => ({
+          ...prev,
+          tableStructureSlug: selectedSub.tableStructureSlug || ""
+        }));
+      }
+    }
+  }, [form.parentSlug, form.subcategorySlug, subcategories, tableStructures, form.tableStructureSlug]);
 
   // Update columns and rowData when tableStructureSlug changes
   useEffect(() => {
@@ -519,6 +534,22 @@ export function TablePostCreate() {
                   </Fade>
                 )}
                 <Stack direction="row" spacing={2} justifyContent="flex-end">
+                  {activeStep === 0 && (
+                    <Button
+                      variant="outlined"
+                      sx={{
+                        color: "#800000",
+                        borderColor: "#800000",
+                        "&:hover": {
+                          borderColor: "#600000",
+                          backgroundColor: "rgba(128, 0, 0, 0.04)"
+                        }
+                      }}
+                      onClick={() => navigate("/table-management", { state: location.state })}
+                    >
+                      Cancel
+                    </Button>
+                  )}
                   {activeStep > 0 && (
                     <Button variant="outlined" onClick={handleBack}>
                       Back

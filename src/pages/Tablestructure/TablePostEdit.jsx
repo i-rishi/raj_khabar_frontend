@@ -14,7 +14,7 @@ import {
   CircularProgress,
   Divider
 } from "@mui/material";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
 import { useCategories } from "../../context/CategoryContext";
@@ -23,6 +23,7 @@ export function TablePostEdit() {
   const { slug } = useParams();
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { categories, subcategories, loadSubcategories } = useCategories();
 
   const [loading, setLoading] = useState(true);
@@ -60,11 +61,11 @@ export function TablePostEdit() {
           });
         } else {
           showToast(data.message || "Failed to fetch table post", "error");
-          navigate("/table-management");
+          navigate("/table-management", { state: location.state });
         }
       } catch (error) {
         showToast("Error fetching table post", error);
-        navigate("/table-management");
+        navigate("/table-management", { state: location.state });
       }
       setLoading(false);
     }
@@ -179,7 +180,7 @@ export function TablePostEdit() {
       const data = await res.json();
       if (data.success) {
         showToast("Table Post Updated!", "success");
-        navigate("/table-management");
+        navigate("/table-management", { state: location.state });
       } else {
         showToast(data.message || "Failed to update table post", "error");
       }
@@ -363,7 +364,7 @@ export function TablePostEdit() {
             <Stack direction="row" spacing={2} justifyContent="flex-end">
               <Button
                 variant="outlined"
-                onClick={() => navigate("/table-management")}
+                onClick={() => navigate("/table-management", { state: location.state })}
               >
                 Cancel
               </Button>

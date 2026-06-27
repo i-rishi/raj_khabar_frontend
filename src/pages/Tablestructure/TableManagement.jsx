@@ -26,7 +26,7 @@ import {
 import { Delete, Edit, Visibility } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useCategories } from "../../context/CategoryContext";
 import { ConfirmDialog } from "../../components/Dialog/Dialog";
 import Checkbox from "@mui/material/Checkbox";
@@ -36,19 +36,21 @@ import useBulkDelete from "../../hooks/useBulkDelete";
 export function TableManagement() {
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const { categories, subcategories, loadSubcategories } = useCategories();
 
   const [dynamicColumns, setDynamicColumns] = useState([]);
   const [tablePosts, setTablePosts] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [search, setSearch] = useState(location.state?.search || "");
+  const [page, setPage] = useState(location.state?.page || 0);
+  const [rowsPerPage, setRowsPerPage] = useState(location.state?.rowsPerPage || 10);
   const [total, setTotal] = useState(0);
 
   // New: category and subcategory filter state
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState(location.state?.category || "");
+  const [selectedSubcategory, setSelectedSubcategory] = useState(location.state?.subcategory || "");
+  const [prevCategory, setPrevCategory] = useState(location.state?.category || "");
 
   // Dialog state for delete
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -77,7 +79,12 @@ export function TableManagement() {
   useEffect(() => {
     if (selectedCategory) {
       loadSubcategories(selectedCategory);
-      setSelectedSubcategory(""); // reset subcategory on category change
+      if (selectedCategory !== prevCategory) {
+        setSelectedSubcategory(""); // reset subcategory on category change
+        setPrevCategory(selectedCategory);
+      }
+    } else {
+      setPrevCategory("");
     }
     // eslint-disable-next-line
   }, [selectedCategory]);
@@ -250,7 +257,15 @@ export function TableManagement() {
                 fontWeight: 600,
                 "&:hover": { background: "#4d0000" }
               }}
-              onClick={() => navigate("/TablePostCreate")}
+              onClick={() => navigate("/TablePostCreate", {
+                state: {
+                  page,
+                  search,
+                  category: selectedCategory,
+                  subcategory: selectedSubcategory,
+                  rowsPerPage
+                }
+              })}
             >
               + Create Table Post
             </Button>
@@ -347,7 +362,15 @@ export function TableManagement() {
                         <IconButton
                           color="primary"
                           onClick={() =>
-                            navigate(`/table-post/edit/${post.slug}`)
+                            navigate(`/table-post/edit/${post.slug}`, {
+                              state: {
+                                page,
+                                search,
+                                category: selectedCategory,
+                                subcategory: selectedSubcategory,
+                                rowsPerPage
+                              }
+                            })
                           }
                         >
                           <Edit />

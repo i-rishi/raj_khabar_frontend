@@ -3,10 +3,11 @@ import { useFormContext, Controller } from "react-hook-form";
 import { Box, Button, Paper } from "@mui/material";
 import { PostFields } from "../PostFields/PostFields";
 import { useToast } from "../../context/ToastContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export function PostForm({ onSubmit, post }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     register,
     handleSubmit,
@@ -48,7 +49,7 @@ export function PostForm({ onSubmit, post }) {
           </Button>
           <Button
             variant="outlined"
-            onClick={() => navigate("/posts")}
+            onClick={() => navigate("/posts", { state: location.state })}
             sx={{
               color: "#800000",
               borderColor: "#800000",
