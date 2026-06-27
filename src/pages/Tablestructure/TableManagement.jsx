@@ -99,7 +99,7 @@ export function TableManagement() {
       } else {
         url = `${API_BASE_URL}/api/table/get-table-posts?page=${
           page + 1
-        }&limit=${rowsPerPage}&search=${encodeURIComponent(search)}`;
+        }&limit=${rowsPerPage}&search=${encodeURIComponent(search)}&category=${selectedCategory}`;
       }
       const res = await fetch(url, { credentials: "include" });
       const data = await res.json();

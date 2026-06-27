@@ -16,6 +16,7 @@ import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
 import { useNavigate } from "react-router-dom";
+import { HEADER_HEIGHT } from "../../constants/layout";
 
 const columnTypes = [
   { value: "text", label: "Text" },
@@ -128,7 +129,7 @@ export function Tablestructure() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        minHeight: "calc(100vh - 160px)",
         background: "linear-gradient(135deg, #f4f0e4 0%, #ffe0e0 100%)",
         display: "flex",
         alignItems: "center",

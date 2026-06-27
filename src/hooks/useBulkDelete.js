@@ -11,6 +11,7 @@ const apiMap = {
   subcategories: bulkDeleteApi.deleteSubcategories,
   'social-media': bulkDeleteApi.deleteSocialMedia,
   'header-components': bulkDeleteApi.deleteHeaderComponents,
+  files: bulkDeleteApi.deleteFiles,
 };
 
 export default function useBulkDelete(

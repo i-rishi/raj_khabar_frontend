@@ -12,7 +12,8 @@ import {
   Grid,
   Tooltip,
   Avatar,
-  CircularProgress
+  CircularProgress,
+  Checkbox
 } from "@mui/material";
 import {
   CloudUpload,
@@ -24,6 +25,8 @@ import {
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
 import { ConfirmDialog } from "../../components/Dialog/Dialog";
+import BulkDeleteToolbar from "../../components/BulkDeleteToolbar/BulkDeleteToolbar";
+import useBulkDelete from "../../hooks/useBulkDelete";
 
 function getFileTypeIcon(url, key) {
   const ext = key.split(".").pop().toLowerCase();
@@ -62,6 +65,24 @@ export function FilesUploader() {
   const fileInputRef = useRef();
   const { showToast } = useToast();
 
+  const {
+    selectedItems,
+    selectedCount,
+    isLoading: isBulkDeleting,
+    toggleSelection,
+    selectAll,
+    clearSelection,
+    isSelected,
+    performBulkDelete,
+  } = useBulkDelete(
+    'files',
+    () => {
+      showToast('Selected files deleted successfully', 'success');
+      fetchFiles();
+    },
+    (err) => showToast(err?.message || 'Failed to delete selected files', 'error')
+  );
+
   const fetchFiles = async () => {
     setLoadingFiles(true);
     try {
@@ -78,6 +99,7 @@ export function FilesUploader() {
       showToast("Error fetching files", error);
     }
     setLoadingFiles(false);
+    clearSelection();
   };
 
   useEffect(() => {
@@ -188,8 +210,8 @@ export function FilesUploader() {
         sx={{
           p: { xs: 2, sm: 4 },
           borderRadius: 5,
-          minWidth: { xs: "98vw", sm: 520 },
-          maxWidth: 900,
+          width: "100%",
+          maxWidth: 1200,
           background: "linear-gradient(135deg, #fff 60%, #ffe0e0 100%)",
           boxShadow: "0 8px 32px rgba(128,0,0,0.15)"
         }}
@@ -312,6 +334,22 @@ export function FilesUploader() {
         >
           Uploaded Files
         </Typography>
+
+        {/* Bulk Delete Toolbar for Files */}
+        {selectedCount > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <BulkDeleteToolbar
+              selectedCount={selectedCount}
+              totalCount={files.length}
+              contentType="files"
+              onSelectAll={() => selectAll(files.map((f) => f.key))}
+              onClearSelection={clearSelection}
+              onBulkDelete={performBulkDelete}
+              isLoading={isBulkDeleting}
+            />
+          </Box>
+        )}
+
         {loadingFiles ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
             <CircularProgress color="secondary" />
@@ -321,82 +359,189 @@ export function FilesUploader() {
             No files uploaded yet.
           </Typography>
         ) : (
-          <Grid container spacing={3}>
-            {files.map((file) => (
-              <Grid item xs={12} sm={6} md={4} key={file.key}>
-                <Paper
-                  elevation={4}
-                  sx={{
-                    p: 2,
-                    borderRadius: 3,
-                    background: "#fff",
-                    border: "1.5px solid #ffe0e0",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    minHeight: 220
-                  }}
-                >
-                  {getFileTypeIcon(file.url, file.key)}
-                  <Typography
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
+              gap: 2
+            }}
+          >
+            {files.map((file) => {
+              const ext = file.key.split(".").pop().toLowerCase();
+              const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext);
+
+              return (
+                <Tooltip key={file.key} title={`${file.key} (${(file.size / 1024).toFixed(1)} KB)`} arrow>
+                  <Box
                     sx={{
-                      color: "#800000",
-                      fontWeight: 600,
-                      mt: 1,
-                      mb: 0.5,
-                      textAlign: "center",
-                      wordBreak: "break-all",
-                      cursor: "pointer",
-                      textDecoration: "underline"
-                    }}
-                    variant="body2"
-                    component="a"
-                    href={file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {file.key}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      color: "#888",
-                      fontSize: 13,
-                      mb: 1,
-                      textAlign: "center"
+                      position: "relative",
+                      width: "100%",
+                      aspectRatio: "1/1",
+                      borderRadius: "12px",
+                      overflow: "hidden",
+                      border: "1px solid rgba(128, 0, 0, 0.12)",
+                      background: "#fff",
+                      boxShadow: "0 4px 10px rgba(0, 0, 0, 0.04)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 6px 15px rgba(128, 0, 0, 0.12)",
+                        "& .overlay": {
+                          opacity: 1
+                        },
+                        "& .checkbox-select": {
+                          opacity: 1
+                        }
+                      }
                     }}
                   >
-                    {(file.size / 1024).toFixed(1)} KB
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mt: "auto" }}>
-                    <Tooltip title="Copy URL">
-                      <IconButton
-                        onClick={() => handleCopy(file.url)}
-                        color="primary"
+                    {/* Bulk Selection Checkbox */}
+                    <Checkbox
+                      checked={isSelected(file.key)}
+                      onChange={() => toggleSelection(file.key)}
+                      sx={{
+                        position: "absolute",
+                        top: 6,
+                        left: 6,
+                        zIndex: 10,
+                        p: 0.5,
+                        bgcolor: "rgba(255, 255, 255, 0.85)",
+                        color: "rgba(128, 0, 0, 0.4)",
+                        '&.Mui-checked': {
+                          color: "#800000",
+                          bgcolor: "#fff"
+                        },
+                        opacity: isSelected(file.key) ? 1 : 0,
+                        transition: "opacity 0.2s ease",
+                        "&.MuiCheckbox-root:hover": {
+                          bgcolor: "#fff"
+                        }
+                      }}
+                      className="checkbox-select"
+                    />
+
+                    {isImage ? (
+                      <Box
+                        component="img"
+                        src={file.url}
+                        alt={file.key}
+                        sx={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "100%",
+                          height: "100%",
+                          bgcolor: "#fffaf5",
+                          color: "#800000",
+                          p: 1
+                        }}
                       >
-                        <FileCopy />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Download">
-                      <IconButton
-                        onClick={() => handleDownload(file)}
-                        color="success"
+                        <InsertDriveFile sx={{ fontSize: 36 }} />
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontSize: "10px",
+                            fontWeight: 700,
+                            color: "#800000",
+                            mt: 0.5,
+                            textTransform: "uppercase"
+                          }}
+                        >
+                          {ext}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {/* File Name Footer */}
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        bgcolor: "rgba(255, 255, 255, 0.9)",
+                        px: 0.5,
+                        py: 0.25,
+                        borderTop: "1px solid rgba(128, 0, 0, 0.08)",
+                        textAlign: "center"
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: "block",
+                          fontSize: "10px",
+                          fontWeight: 600,
+                          color: "#800000",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        }}
                       >
-                        <Download />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton
-                        color="error"
-                        onClick={() => setDeleteDialog({ open: true, file })}
-                      >
-                        <Delete />
-                      </IconButton>
-                    </Tooltip>
-                  </Stack>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
+                        {file.key}
+                      </Typography>
+                    </Box>
+
+                    {/* Hover Overlay with Actions */}
+                    <Box
+                      className="overlay"
+                      sx={{
+                        position: "absolute",
+                        top: 0,
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        background: "rgba(0, 0, 0, 0.7)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 0.5,
+                        opacity: 0,
+                        transition: "opacity 0.2s ease"
+                      }}
+                    >
+                      <Tooltip title="Copy URL">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleCopy(file.url)}
+                          sx={{ color: "#fff", "&:hover": { color: "#ffb6b6" } }}
+                        >
+                          <FileCopy fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Download">
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDownload(file)}
+                          sx={{ color: "#fff", "&:hover": { color: "#c8e6c9" } }}
+                        >
+                          <Download fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          size="small"
+                          onClick={() => setDeleteDialog({ open: true, file })}
+                          sx={{ color: "#ff8a80", "&:hover": { color: "#ff3d00" } }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                </Tooltip>
+              );
+            })}
+          </Box>
         )}
 
         {/* Delete Confirmation Dialog */}

@@ -89,16 +89,9 @@ export function CardManagement() {
   const fetchCards = async () => {
     setLoading(true);
     try {
-      let url = "";
-      if (selectedCategory && selectedSubcategory) {
-        url = `${API_BASE_URL}/api/card/category/${selectedCategory}/subcategory/${selectedSubcategory}?page=${
-          page + 1
-        }&limit=${rowsPerPage}&search=${encodeURIComponent(search)}`;
-      } else {
-        url = `${API_BASE_URL}/api/card/get-all-card-posts?page=${
-          page + 1
-        }&limit=${rowsPerPage}&search=${encodeURIComponent(search)}`;
-      }
+      const url = `${API_BASE_URL}/api/card/get-all-card-posts?page=${
+        page + 1
+      }&limit=${rowsPerPage}&search=${encodeURIComponent(search)}&category=${selectedCategory}&subcategory=${selectedSubcategory}`;
 
       const res = await fetch(url, {
         credentials: "include"

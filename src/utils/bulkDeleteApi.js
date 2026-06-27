@@ -120,6 +120,18 @@ export const bulkDeleteApi = {
     }
   },
 
+  // Delete S3 files
+  deleteFiles: async (keys) => {
+    try {
+      const response = await apiClient.post('/api/s3/bulk-delete', {
+        keys,
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
   // Universal bulk delete
   universalDelete: async (contentType, ids, force = false) => {
     try {

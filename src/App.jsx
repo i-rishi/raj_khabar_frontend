@@ -29,6 +29,7 @@ import { SubcategoryClone } from "./pages/Subcategory/SubcategoryClone";
 // table structure imports
 import { Tablestructure } from "./pages/Tablestructure/Tablestructure";
 import { TableManagement } from "./pages/Tablestructure/TableManagement";
+import { TableStructureManagement } from "./pages/Tablestructure/TableStructureManagement";
 import { TablePostCreate } from "./pages/Tablestructure/TablePostCreate";
 import { TablePostEdit } from "./pages/Tablestructure/TablePostEdit";
 import { HeaderComponentCreate } from "./pages/HeaderComponent/HeaderComponentCreate";
@@ -205,6 +206,14 @@ function AppContent() {
                 />
                 <Route
                   path="/table-structure"
+                  element={
+                    <ProtectedRoute>
+                      <TableStructureManagement />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/table-structure/create"
                   element={
                     <ProtectedRoute>
                       <Tablestructure />
