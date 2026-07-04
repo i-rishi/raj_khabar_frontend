@@ -14,32 +14,29 @@ import {
   InputLabel,
   Divider,
   Tooltip,
-  Stepper,
-  Step,
-  StepLabel,
   Paper,
-  LinearProgress,
-  Fade
+  Fade,
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
 } from "@mui/material";
 import {
   AddCircleOutline,
   Link as LinkIcon,
-  CheckCircle,
   Category,
   TableChart,
-  ListAlt
+  ListAlt,
+  ArrowBack,
+  HelpOutline
 } from "@mui/icons-material";
 import { useCategories } from "../../context/CategoryContext";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
 import { useNavigate, useLocation } from "react-router-dom";
-
-const steps = [
-  { label: "Basic Info", icon: <Category /> },
-  { label: "Category & Structure", icon: <TableChart /> },
-  { label: "Table Rows", icon: <ListAlt /> },
-  { label: "Review & Submit", icon: <CheckCircle /> }
-];
 
 export function TablePostCreate() {
   const { categories, subcategories, loadSubcategories } = useCategories();
@@ -58,7 +55,6 @@ export function TablePostCreate() {
 
   const [tableStructures, setTableStructures] = useState([]);
   const [columns, setColumns] = useState([]);
-  const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
   // Fetch table structures from backend
@@ -173,15 +169,18 @@ export function TablePostCreate() {
     });
   };
 
-  const handleNext = () => setActiveStep((prev) => prev + 1);
-  const handleBack = () => setActiveStep((prev) => prev - 1);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (columns.length !== form.rowData.length) {
       showToast("Row fields must match the number of columns.", "error");
       return;
     }
+    // Verify all rows have input
+    if (form.rowData.some((row) => !row.row)) {
+      showToast("Please fill in all table row fields.", "error");
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/table/create-table-post`, {
@@ -192,17 +191,8 @@ export function TablePostCreate() {
       });
       const data = await res.json();
       if (data.success) {
-        showToast("Table Post Created!", "success");
-        setForm({
-          name: "",
-          slug: "",
-          parentSlug: "",
-          subcategorySlug: "",
-          tableStructureSlug: "",
-          rowData: []
-        });
-        setColumns([]);
-        setActiveStep(0);
+        showToast("Table Post Created Successfully!", "success");
+        navigate("/table-management", { state: location.state });
       } else {
         if (data.message === "Unauthorized") {
           navigate("/login");
@@ -216,388 +206,378 @@ export function TablePostCreate() {
     setLoading(false);
   };
 
-  // Progress bar percentage
-  const progress = ((activeStep + 1) / steps.length) * 100;
+  const isFormValid =
+    form.name &&
+    form.slug &&
+    form.parentSlug &&
+    form.subcategorySlug &&
+    form.tableStructureSlug &&
+    columns.length > 0 &&
+    columns.length === form.rowData.length &&
+    !form.rowData.some((row) => !row.row);
+
+  const activeStructure = tableStructures.find(
+    (t) => t.slug === form.tableStructureSlug
+  );
 
   return (
     <Box
       sx={{
         minHeight: "100vh",
-        background: "linear-gradient(120deg, #f4f0e4 0%, #ffe0e0 100%)",
+        background: "linear-gradient(135deg, #fbf8f3 0%, #f7e3e3 100%)",
+        py: 4,
+        px: { xs: 2, md: 4 },
         display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "center",
-        py: 6,
-        position: "relative"
+        flexDirection: "column",
+        alignItems: "center"
       }}
     >
-      {/* Animated Progress Bar */}
-      <LinearProgress
-        variant="determinate"
-        value={progress}
-        sx={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: 6,
-          background: "#ffe0e0",
-          zIndex: 1000,
-          "& .MuiLinearProgress-bar": {
-            background: "linear-gradient(90deg, #800000 40%, #ffb6b6 100%)"
-          }
-        }}
-      />
-      <Box sx={{ width: "100%", maxWidth: 800 }}>
-        <Stepper
-          activeStep={activeStep}
-          alternativeLabel
-          sx={{
-            mb: 4,
-            "& .MuiStepIcon-root": { color: "#ffb6b6" },
-            "& .MuiStepIcon-root.Mui-active": { color: "#800000" },
-            "& .MuiStepIcon-root.Mui-completed": { color: "#800000" }
-          }}
+      <Box sx={{ width: "100%", maxWidth: 1400 }}>
+        {/* Header Section */}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          sx={{ mb: 4 }}
         >
-          {steps.map((step, idx) => (
-            <Step key={step.label}>
-              <StepLabel
-                icon={step.icon}
+          <Box>
+            <Button
+              startIcon={<ArrowBack />}
+              onClick={() => navigate("/table-management", { state: location.state })}
+              sx={{
+                color: "#800000",
+                fontWeight: 600,
+                textTransform: "none",
+                mb: 1,
+                "&:hover": { backgroundColor: "rgba(128, 0, 0, 0.05)" }
+              }}
+            >
+              Back to Table Management
+            </Button>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: "#800000" }}>
+              Create Table Post
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#666", mt: 0.5 }}>
+              Create a structured table entry by choosing a category hierarchy and configuring row data.
+            </Typography>
+          </Box>
+        </Stack>
+
+        <form onSubmit={handleSubmit} autoComplete="off" style={{ width: "100%" }}>
+          <Grid container spacing={3} alignItems="flex-start">
+            {/* Left Column: Post Details & Settings */}
+            <Grid item xs={12} sm={5} md={4} sx={{ minWidth: 0 }}>
+              <Stack spacing={3}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 3.5,
+                    borderRadius: 4,
+                    boxShadow: "0 8px 32px rgba(128,0,0,0.06)",
+                    border: "1px solid #fff",
+                    background: "rgba(255, 255, 255, 0.9)",
+                    width: "100%"
+                  }}
+                >
+                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 3 }}>
+                    <Category sx={{ color: "#800000", fontSize: 24 }} />
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#800000" }}>
+                      Post Information
+                    </Typography>
+                  </Stack>
+
+                  <Stack spacing={2.5}>
+                    <TextField
+                      label="Post Name"
+                      name="name"
+                      value={form.name}
+                      onChange={handleNameChange}
+                      required
+                      fullWidth
+                      variant="outlined"
+                      placeholder="e.g. Latest Exam Schedule"
+                      sx={{ background: "#fff" }}
+                    />
+
+                    <TextField
+                      label="Slug"
+                      name="slug"
+                      value={form.slug}
+                      onChange={handleChange}
+                      required
+                      fullWidth
+                      variant="outlined"
+                      placeholder="e.g. latest_exam_schedule"
+                      sx={{ background: "#fff" }}
+                      InputProps={{
+                        startAdornment: (
+                          <Typography sx={{ color: "#800000", fontWeight: 600, mr: 0.5 }}>
+                            /
+                          </Typography>
+                        )
+                      }}
+                    />
+
+                    <Divider sx={{ my: 1 }} />
+
+                    <FormControl fullWidth required>
+                      <InputLabel>Category</InputLabel>
+                      <Select
+                        name="parentSlug"
+                        value={form.parentSlug}
+                        label="Category"
+                        onChange={handleChange}
+                        sx={{ background: "#fff" }}
+                      >
+                        {categories.map((cat) => (
+                          <MenuItem key={cat.slug} value={cat.slug}>
+                            {cat.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth required disabled={!form.parentSlug}>
+                      <InputLabel>Subcategory</InputLabel>
+                      <Select
+                        name="subcategorySlug"
+                        value={form.subcategorySlug}
+                        label="Subcategory"
+                        onChange={handleChange}
+                        sx={{ background: "#fff" }}
+                      >
+                        {(subcategories[form.parentSlug] || []).map((sub) => (
+                          <MenuItem key={sub.slug} value={sub.slug}>
+                            {sub.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <TextField
+                      label="Mapped Table Structure"
+                      value={activeStructure?.name || ""}
+                      placeholder="Structure auto-resolves from subcategory"
+                      InputProps={{ readOnly: true }}
+                      fullWidth
+                      disabled
+                      sx={{
+                        background: "#fdfdfd",
+                        "& .MuiInputBase-input.Mui-disabled": {
+                          WebkitTextFillColor: "#333",
+                          fontWeight: 600
+                        }
+                      }}
+                      helperText={
+                        activeStructure
+                          ? `Resolved: ${activeStructure.columns.length} columns defined`
+                          : "Please select category & subcategory to resolve structure"
+                      }
+                    />
+                  </Stack>
+                </Paper>
+
+                {/* Left Column: Action Card */}
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 3,
+                    borderRadius: 4,
+                    boxShadow: "0 8px 32px rgba(128,0,0,0.06)",
+                    border: "1px solid #fff",
+                    background: "rgba(255, 255, 255, 0.9)",
+                    width: "100%"
+                  }}
+                >
+                  <Stack spacing={2}>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      fullWidth
+                      startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <AddCircleOutline />}
+                      disabled={!isFormValid || loading}
+                      sx={{
+                        py: 1.5,
+                        borderRadius: 2,
+                        background: "linear-gradient(90deg, #800000 0%, #a02020 100%)",
+                        boxShadow: "0 4px 12px rgba(128,0,0,0.25)",
+                        fontWeight: 700,
+                        letterSpacing: "0.5px",
+                        color: "#fffaf5",
+                        "&:hover": {
+                          background: "linear-gradient(90deg, #600000 0%, #800000 100%)",
+                          boxShadow: "0 6px 16px rgba(128,0,0,0.35)"
+                        },
+                        "&.Mui-disabled": {
+                          background: "#e0d8d8",
+                          color: "#9e9494"
+                        }
+                      }}
+                    >
+                      {loading ? "Creating..." : "Create Table Post"}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={() => navigate("/table-management", { state: location.state })}
+                      sx={{
+                        py: 1.2,
+                        borderRadius: 2,
+                        borderColor: "#800000",
+                        color: "#800000",
+                        fontWeight: 600,
+                        "&:hover": {
+                          borderColor: "#600000",
+                          backgroundColor: "rgba(128, 0, 0, 0.05)"
+                        }
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  </Stack>
+                </Paper>
+              </Stack>
+            </Grid>
+
+            <Grid item xs={12} sm={7} md={8} sx={{ minWidth: 0 }}>
+              <Paper
+                elevation={3}
                 sx={{
-                  ".MuiStepLabel-label": {
-                    fontWeight: activeStep === idx ? 700 : 500,
-                    color: activeStep === idx ? "#800000" : "#888"
-                  }
+                  p: 3.5,
+                  borderRadius: 4,
+                  boxShadow: "0 8px 32px rgba(128,0,0,0.06)",
+                  border: "1px solid #fff",
+                  background: "rgba(255, 255, 255, 0.9)",
+                  minHeight: 450,
+                  display: "flex",
+                  flexDirection: "column",
+                  width: "100%"
                 }}
               >
-                {step.label}
-              </StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-        <Fade in>
-          <Paper
-            elevation={8}
-            sx={{
-              p: { xs: 2, sm: 4 },
-              borderRadius: 4,
-              boxShadow: "0 8px 32px rgba(128,0,0,0.18)",
-              background: "#fff",
-              minHeight: 420,
-              transition: "box-shadow 0.3s"
-            }}
-          >
-            <form onSubmit={handleSubmit} autoComplete="off">
-              <Stack spacing={3}>
-                {activeStep === 0 && (
-                  <Fade in>
-                    <Box>
-                      <Typography variant="h6" sx={{ color: "#800000", mb: 2 }}>
-                        Let's start with the basics!
-                      </Typography>
-                      <TextField
-                        label="Post Name"
-                        name="name"
-                        value={form.name}
-                        onChange={handleNameChange}
-                        required
-                        fullWidth
-                        variant="outlined"
-                        sx={{ background: "#fff", mb: 2 }}
-                      />
-                      <TextField
-                        label="Slug"
-                        name="slug"
-                        value={form.slug}
-                        onChange={handleChange}
-                        required
-                        fullWidth
-                        variant="outlined"
-                        sx={{ background: "#fff" }}
-                        InputProps={{
-                          startAdornment: (
-                            <Typography sx={{ color: "#800000", mr: 1 }}>
-                              /
-                            </Typography>
-                          )
-                        }}
-                      />
-                    </Box>
-                  </Fade>
-                )}
-                {activeStep === 1 && (
-                  <Fade in>
-                    <Box>
-                      <Typography variant="h6" sx={{ color: "#800000", mb: 2 }}>
-                        Choose category and structure
-                      </Typography>
-                      <FormControl fullWidth sx={{ mb: 2 }}>
-                        <InputLabel>Category</InputLabel>
-                        <Select
-                          name="parentSlug"
-                          value={form.parentSlug}
-                          label="Category"
-                          onChange={handleChange}
-                          sx={{ background: "#fff" }}
-                          required
-                        >
-                          {categories.map((cat) => (
-                            <MenuItem key={cat.slug} value={cat.slug}>
-                              {cat.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <FormControl fullWidth sx={{ mb: 2 }}>
-                        <InputLabel>Subcategory</InputLabel>
-                        <Select
-                          name="subcategorySlug"
-                          value={form.subcategorySlug}
-                          label="Subcategory"
-                          onChange={handleChange}
-                          sx={{ background: "#fff" }}
-                          required
-                          disabled={!form.parentSlug}
-                        >
-                          {(subcategories[form.parentSlug] || []).map((sub) => (
-                            <MenuItem key={sub.slug} value={sub.slug}>
-                              {sub.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <TextField
-                        label="Table Structure"
-                        value={
-                          tableStructures.find(
-                            (t) => t.slug === form.tableStructureSlug
-                          )?.name || ""
-                        }
-                        InputProps={{ readOnly: true }}
-                        fullWidth
-                        sx={{ background: "#fff" }}
-                      />
-                    </Box>
-                  </Fade>
-                )}
-                {activeStep === 2 && (
-                  <Fade in>
-                    <Box>
-                      <Typography variant="h6" sx={{ color: "#800000", mb: 2 }}>
-                        Fill in your table rows
-                      </Typography>
-                      <Divider sx={{ my: 2, borderColor: "#800000" }} />
-                      {columns.length > 0 && (
-                        <Grid container spacing={2}>
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 3 }}>
+                  <TableChart sx={{ color: "#800000", fontSize: 24 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: "#800000" }}>
+                    Table Rows Data
+                  </Typography>
+                </Stack>
+
+                 {columns.length > 0 ? (
+                  <Fade in timeout={400}>
+                    <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #efe8e0", borderRadius: 3, overflow: "hidden", background: "#fff" }}>
+                      <Table size="small">
+                        <TableHead sx={{ backgroundColor: "#faf8f5" }}>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 700, color: "#800000", py: 2, px: 2.5, width: "30%" }}>
+                              Column / Field Name
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 700, color: "#800000", py: 2, px: 2, width: "40%" }}>
+                              Value
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 700, color: "#800000", py: 2, px: 2, width: "30%" }}>
+                              Link Configuration
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
                           {columns.map((col, idx) => (
-                            <React.Fragment key={idx}>
-                              <Grid item xs={12} md={6}>
+                            <TableRow 
+                              key={idx}
+                              sx={{ 
+                                "&:hover": { backgroundColor: "#fffdfa" },
+                                transition: "background-color 0.2s"
+                              }}
+                            >
+                              <TableCell sx={{ py: 2, px: 2.5, verticalAlign: "middle" }}>
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                  <ListAlt sx={{ fontSize: 18, color: "#800000" }} />
+                                  <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "#333" }}>
+                                    {col.name}
+                                  </Typography>
+                                </Stack>
+                              </TableCell>
+
+                              <TableCell sx={{ py: 1.5, px: 2, verticalAlign: "middle" }}>
                                 <TextField
-                                  label={col.name}
                                   value={form.rowData[idx]?.row || ""}
-                                  onChange={(e) =>
-                                    handleRowChange(idx, "row", e.target.value)
-                                  }
+                                  onChange={(e) => handleRowChange(idx, "row", e.target.value)}
                                   required
                                   fullWidth
+                                  size="small"
                                   variant="outlined"
-                                  sx={{ background: "#fff" }}
+                                  placeholder={`Enter cell value`}
                                   InputProps={{
                                     endAdornment: form.rowData[idx]?.isLink ? (
-                                      <Tooltip title="This row is a link">
-                                        <LinkIcon color="primary" />
+                                      <Tooltip title="Row behaves as link">
+                                        <LinkIcon color="primary" sx={{ fontSize: 20 }} />
                                       </Tooltip>
                                     ) : null
                                   }}
                                 />
-                              </Grid>
-                              <Grid item xs={6} md={3}>
-                                <Typography
-                                  sx={{
-                                    color: "#800000",
-                                    fontWeight: 500,
-                                    mt: 2,
-                                    display: "flex",
-                                    alignItems: "center"
-                                  }}
-                                >
-                                  Is Link?
-                                  <Switch
-                                    checked={!!form.rowData[idx]?.isLink}
-                                    onChange={(_, checked) =>
-                                      handleSwitchChange(idx, checked)
-                                    }
-                                    color="primary"
-                                    sx={{ ml: 1 }}
-                                  />
-                                </Typography>
-                              </Grid>
-                              <Grid item xs={6} md={3}>
-                                {form.rowData[idx]?.isLink && (
-                                  <FormControl fullWidth>
-                                    <InputLabel>Link Type</InputLabel>
-                                    <Select
-                                      value={
-                                        form.rowData[idx]?.link_type ||
-                                        "external"
-                                      }
-                                      label="Link Type"
-                                      onChange={(e) =>
-                                        handleRowChange(
-                                          idx,
-                                          "link_type",
-                                          e.target.value
-                                        )
-                                      }
-                                      sx={{ background: "#fff" }}
-                                    >
-                                      <MenuItem value="external">
-                                        External
-                                      </MenuItem>
-                                      <MenuItem value="pdf">PDF</MenuItem>
-                                      <MenuItem value="web-view">
-                                        Web View
-                                      </MenuItem>
-                                    </Select>
-                                  </FormControl>
-                                )}
-                              </Grid>
-                            </React.Fragment>
+                              </TableCell>
+
+                              <TableCell sx={{ py: 1.5, px: 2, verticalAlign: "middle" }}>
+                                <Stack direction="row" spacing={2} alignItems="center">
+                                  <Stack direction="row" spacing={0.5} alignItems="center">
+                                    <Typography variant="body2" sx={{ fontWeight: 500, color: "#666" }}>
+                                      Link?
+                                    </Typography>
+                                    <Switch
+                                      checked={!!form.rowData[idx]?.isLink}
+                                      onChange={(_, checked) => handleSwitchChange(idx, checked)}
+                                      color="primary"
+                                      size="small"
+                                    />
+                                  </Stack>
+
+                                  {form.rowData[idx]?.isLink && (
+                                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                                      <Select
+                                        value={form.rowData[idx]?.link_type || "external"}
+                                        onChange={(e) => handleRowChange(idx, "link_type", e.target.value)}
+                                      >
+                                        <MenuItem value="external">External</MenuItem>
+                                        <MenuItem value="pdf">PDF</MenuItem>
+                                        <MenuItem value="web-view">Web View</MenuItem>
+                                      </Select>
+                                    </FormControl>
+                                  )}
+                                </Stack>
+                              </TableCell>
+                            </TableRow>
                           ))}
-                        </Grid>
-                      )}
-                    </Box>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
                   </Fade>
+                ) : (
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "2px dashed #efe8e0",
+                      borderRadius: 4,
+                      p: 4,
+                      textAlign: "center",
+                      background: "#faf8f5"
+                    }}
+                  >
+                    <TableChart sx={{ fontSize: 64, color: "#d2b4b4", mb: 2 }} />
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: "#800000", mb: 1 }}>
+                      No Table Columns Mapped Yet
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "#777", maxWidth: 400 }}>
+                      To configure table row values, please select a <b>Category</b> and a <b>Subcategory</b> containing a table structure in the post settings on the left.
+                    </Typography>
+                  </Box>
                 )}
-                {activeStep === 3 && (
-                  <Fade in>
-                    <Box>
-                      <Typography variant="h6" sx={{ color: "#800000", mb: 2 }}>
-                        Review your post before submitting!
-                      </Typography>
-                      <Box
-                        sx={{
-                          background: "#fffaf5",
-                          borderRadius: 2,
-                          p: 2,
-                          mb: 2,
-                          border: "1px solid #ffe0e0"
-                        }}
-                      >
-                        <Typography>
-                          <b>Name:</b> {form.name}
-                        </Typography>
-                        <Typography>
-                          <b>Slug:</b> {form.slug}
-                        </Typography>
-                        <Typography>
-                          <b>Category:</b>{" "}
-                          {
-                            categories.find((c) => c.slug === form.parentSlug)
-                              ?.name
-                          }
-                        </Typography>
-                        <Typography>
-                          <b>Subcategory:</b>{" "}
-                          {
-                            (subcategories[form.parentSlug] || []).find(
-                              (s) => s.slug === form.subcategorySlug
-                            )?.name
-                          }
-                        </Typography>
-                        <Typography>
-                          <b>Table Structure:</b>{" "}
-                          {
-                            tableStructures.find(
-                              (t) => t.slug === form.tableStructureSlug
-                            )?.name
-                          }
-                        </Typography>
-                        <Divider sx={{ my: 1 }} />
-                        <Typography>
-                          <b>Rows:</b>
-                        </Typography>
-                        <ul>
-                          {columns.map((col, idx) => (
-                            <li key={col.name}>
-                              <b>{col.name}:</b> {form.rowData[idx]?.row}{" "}
-                              {form.rowData[idx]?.isLink && (
-                                <span style={{ color: "#1976d2" }}>
-                                  [Link: {form.rowData[idx]?.link_type}]
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </Box>
-                    </Box>
-                  </Fade>
-                )}
-                <Stack direction="row" spacing={2} justifyContent="flex-end">
-                  {activeStep === 0 && (
-                    <Button
-                      variant="outlined"
-                      sx={{
-                        color: "#800000",
-                        borderColor: "#800000",
-                        "&:hover": {
-                          borderColor: "#600000",
-                          backgroundColor: "rgba(128, 0, 0, 0.04)"
-                        }
-                      }}
-                      onClick={() => navigate("/table-management", { state: location.state })}
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                  {activeStep > 0 && (
-                    <Button variant="outlined" onClick={handleBack}>
-                      Back
-                    </Button>
-                  )}
-                  {activeStep < steps.length - 1 && (
-                    <Button
-                      variant="contained"
-                      onClick={handleNext}
-                      sx={{
-                        background: "#800000",
-                        color: "#fffaf5",
-                        "&:hover": { background: "#4d0000" }
-                      }}
-                      disabled={
-                        (activeStep === 0 && (!form.name || !form.slug)) ||
-                        (activeStep === 1 &&
-                          (!form.parentSlug ||
-                            !form.subcategorySlug ||
-                            !form.tableStructureSlug)) ||
-                        (activeStep === 2 &&
-                          (columns.length !== form.rowData.length ||
-                            form.rowData.some((row) => !row.row)))
-                      }
-                    >
-                      Next
-                    </Button>
-                  )}
-                  {activeStep === steps.length - 1 && (
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      sx={{
-                        background: "#800000",
-                        color: "#fffaf5",
-                        "&:hover": { background: "#4d0000" }
-                      }}
-                      startIcon={<AddCircleOutline />}
-                      disabled={loading}
-                    >
-                      {loading ? "Creating..." : "Create Table Post"}
-                    </Button>
-                  )}
-                </Stack>
-              </Stack>
-            </form>
-          </Paper>
-        </Fade>
+              </Paper>
+            </Grid>
+          </Grid>
+        </form>
       </Box>
     </Box>
   );

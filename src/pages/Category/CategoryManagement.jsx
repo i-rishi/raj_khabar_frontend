@@ -83,6 +83,7 @@ export function CategoryManagement() {
       slug: `${category.slug}_copy`,
       description: category.description || "",
       isVisibleOnHome: category.isVisibleOnHome || false,
+      hideCategory: category.hideCategory || false,
       iconUrl: category.iconUrl || "",
       subcategories: (category.subcategories || []).map((sub) => ({
         name: sub.name,
@@ -195,6 +196,7 @@ export function CategoryManagement() {
       formData.append("slug", cloneCategoryData.slug);
       formData.append("description", cloneCategoryData.description);
       formData.append("isVisibleOnHome", cloneCategoryData.isVisibleOnHome);
+      formData.append("hideCategory", cloneCategoryData.hideCategory || false);
       
       if (cloneIconFile) {
         formData.append("icon", cloneIconFile);
@@ -414,6 +416,17 @@ export function CategoryManagement() {
                     color: "#4d0000"
                   }}
                 />
+                {category.hideCategory && (
+                  <Chip
+                    label="Hidden on Website"
+                    size="small"
+                    sx={{
+                      ml: 1,
+                      background: "#ffb74d",
+                      color: "#5d4037"
+                    }}
+                  />
+                )}
               </AccordionSummary>
               <AccordionDetails
                 sx={{ display: "flex", flexDirection: "column" }}
@@ -635,6 +648,31 @@ export function CategoryManagement() {
                           />
                         }
                         label="Visible on Home"
+                        sx={{ color: "#800000" }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={!!cloneCategoryData.hideCategory}
+                            onChange={(e) =>
+                              setCloneCategoryData({
+                                ...cloneCategoryData,
+                                hideCategory: e.target.checked
+                              })
+                            }
+                            sx={{
+                              "& .MuiSwitch-switchBase.Mui-checked": {
+                                color: "#800000"
+                              },
+                              "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                                backgroundColor: "#800000"
+                              }
+                            }}
+                          />
+                        }
+                        label="Hide Category"
                         sx={{ color: "#800000" }}
                       />
                     </Grid>

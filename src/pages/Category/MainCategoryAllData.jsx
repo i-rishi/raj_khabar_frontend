@@ -197,6 +197,13 @@ export function MainCategoryAllData() {
               color={category.isVisibleOnHome ? "success" : "default"}
               size="small"
             />
+            {category.hideCategory && (
+              <Chip
+                label="Hidden on Website"
+                color="error"
+                size="small"
+              />
+            )}
             <Button
               variant="outlined"
               startIcon={<Edit />}

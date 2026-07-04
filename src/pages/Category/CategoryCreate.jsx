@@ -43,7 +43,8 @@ export function CategoryCreate() {
       description: "",
       parentSlug: "",
       iconUrl: "",
-      isVisibleOnHome: true
+      isVisibleOnHome: true,
+      hideCategory: false
     }
   });
 
@@ -262,6 +263,31 @@ export function CategoryCreate() {
                     />
                   }
                   label="Visible on Home"
+                  sx={{ color: "#800000" }}
+                />
+              )}
+            />
+            <Controller
+              name="hideCategory"
+              control={control}
+              render={({ field }) => (
+                <FormControlLabel
+                  control={
+                    <Switch
+                      {...field}
+                      checked={!!field.value}
+                      sx={{
+                        "& .MuiSwitch-switchBase.Mui-checked": {
+                          color: "#800000"
+                        },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                          {
+                            backgroundColor: "#800000"
+                          }
+                      }}
+                    />
+                  }
+                  label="Hide Category"
                   sx={{ color: "#800000" }}
                 />
               )}

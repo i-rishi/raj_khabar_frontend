@@ -43,7 +43,8 @@ export function CategoryEdit() {
       description: "",
       parentSlug: "",
       iconUrl: "",
-      isVisibleOnHome: true
+      isVisibleOnHome: true,
+      hideCategory: false
     }
   });
 
@@ -62,7 +63,8 @@ export function CategoryEdit() {
             description: data.category.description,
             parentSlug: data.category.parentSlug || "",
             iconUrl: "",
-            isVisibleOnHome: data.category.isVisibleOnHome
+            isVisibleOnHome: data.category.isVisibleOnHome,
+            hideCategory: data.category.hideCategory || false
           });
           if (data.category.iconUrl) setIconPreview(data.category.iconUrl);
         } else {
@@ -289,6 +291,31 @@ export function CategoryEdit() {
                     />
                   }
                   label="Visible on Home"
+                  sx={{ color: "#800000" }}
+                />
+              )}
+            />
+            <Controller
+              name="hideCategory"
+              control={control}
+              render={({ field }) => (
+                <FormControlLabel
+                  control={
+                    <Switch
+                      {...field}
+                      checked={!!field.value}
+                      sx={{
+                        "& .MuiSwitch-switchBase.Mui-checked": {
+                          color: "#800000"
+                        },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
+                          {
+                            backgroundColor: "#800000"
+                          }
+                      }}
+                    />
+                  }
+                  label="Hide Category"
                   sx={{ color: "#800000" }}
                 />
               )}

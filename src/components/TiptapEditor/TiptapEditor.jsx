@@ -27,8 +27,13 @@ import {
   FormControlLabel,
   Switch,
   Typography,
+  Menu,
+  MenuItem,
 } from "@mui/material";
 import FormatSizeIcon from "@mui/icons-material/FormatSize";
+import RemoveIcon from "@mui/icons-material/Remove";
+import AddIcon from "@mui/icons-material/Add";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ResizeImage from "tiptap-extension-resize-image";
 import { FaHeading } from "react-icons/fa6";
 import AdSnippet from "./AdSnippet";
@@ -160,6 +165,9 @@ export default function TiptapEditor({ onChange, initialContent }) {
   const [inputJs, setInputJs] = useState("");
   const [codeActiveTab, setCodeActiveTab] = useState("html");
 
+  const [fontSizeInput, setFontSizeInput] = useState("14");
+  const [fontSizeAnchorEl, setFontSizeAnchorEl] = useState(null);
+
   useEffect(() => {
     const handleEditHtmlBlock = (e) => {
       const { pos, html, css, js } = e.detail;
@@ -273,9 +281,73 @@ export default function TiptapEditor({ onChange, initialContent }) {
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.getJSON());
+      const json = editor.getJSON();
+      console.log("DEBUG [TiptapEditor onUpdate] json content:", json);
+      onChange(json);
     }
   });
+
+  // Sync input field text with editor's current font-size selection
+  useEffect(() => {
+    if (!editor) return;
+    const updateInput = () => {
+      const size = editor.getAttributes("textStyle").fontSize || "14";
+      setFontSizeInput(String(size));
+    };
+    editor.on("selectionUpdate", updateInput);
+    editor.on("transaction", updateInput);
+    updateInput();
+    return () => {
+      editor.off("selectionUpdate", updateInput);
+      editor.off("transaction", updateInput);
+    };
+  }, [editor]);
+
+  const getCurrentFontSize = () => {
+    const size = editor?.getAttributes("textStyle").fontSize;
+    if (!size) return 14;
+    const parsed = parseInt(size, 10);
+    return isNaN(parsed) ? 14 : parsed;
+  };
+
+  const applyFontSize = (val) => {
+    if (!editor) return;
+    const parsed = parseInt(val, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      editor.chain().focus().setFontSize(String(parsed)).run();
+      setFontSizeInput(String(parsed));
+    } else {
+      const size = editor.getAttributes("textStyle").fontSize || "14";
+      setFontSizeInput(String(size));
+    }
+  };
+
+  const handleDecrement = () => {
+    const current = getCurrentFontSize();
+    const next = Math.max(1, current - 1);
+    applyFontSize(String(next));
+  };
+
+  const handleIncrement = () => {
+    const current = getCurrentFontSize();
+    const next = current + 1;
+    applyFontSize(String(next));
+  };
+
+  const handleInputChange = (e) => {
+    setFontSizeInput(e.target.value);
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (e.key === "Enter") {
+      applyFontSize(fontSizeInput);
+      editor?.chain().focus().run();
+    }
+  };
+
+  const handleInputBlur = () => {
+    applyFontSize(fontSizeInput);
+  };
 
   // Close grid on outside click
   useEffect(() => {
@@ -642,44 +714,85 @@ export default function TiptapEditor({ onChange, initialContent }) {
             <LinkIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Font Size">
-          <span style={{ display: "flex", alignItems: "center" }}>
-            <FormatSizeIcon sx={{ color: "#800000", marginRight: 1 }} />
-            <select
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            border: "1px solid #e6c8c8",
+            borderRadius: "4px",
+            background: "#fffaf5",
+            padding: "2px 4px",
+            gap: 0.25,
+            marginRight: 8,
+            height: 36,
+          }}
+        >
+          {/* Decrement Button */}
+          <Tooltip title="Decrease Font Size">
+            <span>
+              <IconButton
+                size="small"
+                onClick={handleDecrement}
+                disabled={!editor}
+                sx={{ color: "#800000", padding: "4px" }}
+              >
+                <RemoveIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+
+          {/* Size Input Box */}
+          <Tooltip title="Font Size">
+            <input
+              type="text"
+              value={fontSizeInput}
+              onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
+              onBlur={handleInputBlur}
+              disabled={!editor}
               style={{
-                height: 36,
-                borderRadius: 4,
-                border: "none",
+                width: "32px",
+                height: "26px",
+                border: "1px solid #e6c8c8",
+                borderRadius: "4px",
+                textAlign: "center",
+                fontSize: "14px",
                 color: "#800000",
-                padding: "4px 8px",
-                fontSize: "16px",
-                background: "#fffaf5",
-                marginRight: 8
+                background: "#ffffff",
+                outline: "none",
+                fontWeight: "bold",
               }}
-              value={editor?.getAttributes("textStyle").fontSize || ""}
-              onChange={(e) => {
-                const size = e.target.value;
-                if (size === "") {
-                  editor?.chain().focus().unsetFontSize().run();
-                } else {
-                  editor?.chain().focus().setFontSize(size).run();
-                }
-              }}
-            >
-              <option value="">Default</option>
-              <option value="8">8</option>
-              <option value="10">10</option>
-              <option value="12">12</option>
-              <option value="14">14</option>
-              <option value="16">16</option>
-              <option value="18">18</option>
-              <option value="24">24</option>
-              <option value="36">36</option>
-              <option value="48">48</option>
-              <option value="72">72</option>
-            </select>
-          </span>
-        </Tooltip>
+            />
+          </Tooltip>
+
+          {/* Dropdown Button */}
+          <Tooltip title="Select Font Size">
+            <span>
+              <IconButton
+                size="small"
+                onClick={(e) => setFontSizeAnchorEl(e.currentTarget)}
+                disabled={!editor}
+                sx={{ color: "#800000", padding: "4px" }}
+              >
+                <ArrowDropDownIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+
+          {/* Increment Button */}
+          <Tooltip title="Increase Font Size">
+            <span>
+              <IconButton
+                size="small"
+                onClick={handleIncrement}
+                disabled={!editor}
+                sx={{ color: "#800000", padding: "4px" }}
+              >
+                <AddIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Box>
         <Tooltip title="Insert Code Block">
           <IconButton
             onClick={() => {
@@ -1205,6 +1318,32 @@ export default function TiptapEditor({ onChange, initialContent }) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Menu
+        anchorEl={fontSizeAnchorEl}
+        open={Boolean(fontSizeAnchorEl)}
+        onClose={() => setFontSizeAnchorEl(null)}
+        PaperProps={{
+          style: {
+            maxHeight: 300,
+            width: "80px",
+          },
+        }}
+      >
+        {["8", "9", "10", "11", "12", "14", "16", "18", "24", "30", "36", "48", "60", "72", "96"].map((size) => (
+          <MenuItem
+            key={size}
+            selected={fontSizeInput === size}
+            onClick={() => {
+              applyFontSize(size);
+              setFontSizeAnchorEl(null);
+            }}
+            style={{ justifyContent: "center" }}
+          >
+            {size}
+          </MenuItem>
+        ))}
+      </Menu>
     </Box>
   );
 }
