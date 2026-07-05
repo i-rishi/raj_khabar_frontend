@@ -20,24 +20,9 @@ export function PostEditPage() {
   const methods = useForm();
 
   const {
-    register,
-    handleSubmit,
-    watch,
-    control,
-    formState: { errors },
-    setValue,
     reset,
   } = methods;
 
-  const [selectedCategory, setSelectedCategory] = useState(
-    post?.categorySlug || ""
-  );
-
-  // Update selectedCategory when post loads
-  useEffect(() => {
-    if (post?.categorySlug) setSelectedCategory(post.categorySlug);
-    // Optionally set other fields here if needed
-  }, [post]);
 
   // Fetch post data by ID
   useEffect(() => {
@@ -76,6 +61,8 @@ export function PostEditPage() {
             isVisibleInCarousel: data.post.isVisibleInCarousel || false,
             showAdOnLinks: data.post.showAdOnLinks || false,
             sendNotification: data.post.sendNotification || false,
+            isPageBlockEnabled: data.post.isPageBlockEnabled || false,
+            pageBlockPercentage: data.post.pageBlockPercentage || "",
             type: data.post.type || "",
             publishedAt: data.post.publishedAt || "",
             imageUrl: data.post.imageUrl || "",
@@ -150,8 +137,6 @@ export function PostEditPage() {
   return (
     <FormProvider {...methods}>
       <PostForm
-        selectedCategory={watch("categorySlug")}
-        setSelectedCategory={setSelectedCategory}
         onSubmit={onSubmit}
         post={post}
       />

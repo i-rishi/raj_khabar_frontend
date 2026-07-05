@@ -1,8 +1,7 @@
 // /components/PostForm/PostForm.jsx
-import { useFormContext, Controller } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { Box, Button, Paper } from "@mui/material";
 import { PostFields } from "../PostFields/PostFields";
-import { useToast } from "../../context/ToastContext";
 import { useNavigate, useLocation } from "react-router-dom";
 
 export function PostForm({ onSubmit, post }) {
@@ -11,7 +10,6 @@ export function PostForm({ onSubmit, post }) {
   const {
     register,
     handleSubmit,
-    control,
     watch,
     setValue,
     formState: { errors },

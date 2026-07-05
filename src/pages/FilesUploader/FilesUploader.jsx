@@ -9,9 +9,7 @@ import {
   IconButton,
   Input,
   Link as MuiLink,
-  Grid,
   Tooltip,
-  Avatar,
   CircularProgress,
   Checkbox
 } from "@mui/material";
@@ -27,32 +25,6 @@ import { useToast } from "../../context/ToastContext";
 import { ConfirmDialog } from "../../components/Dialog/Dialog";
 import BulkDeleteToolbar from "../../components/BulkDeleteToolbar/BulkDeleteToolbar";
 import useBulkDelete from "../../hooks/useBulkDelete";
-
-function getFileTypeIcon(url, key) {
-  const ext = key.split(".").pop().toLowerCase();
-  if (["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(ext)) {
-    return (
-      <Avatar
-        src={url}
-        alt={key}
-        variant="rounded"
-        sx={{
-          width: 56,
-          height: 56,
-          bgcolor: "#ffe0e0",
-          border: "1px solid #800000"
-        }}
-      />
-    );
-  }
-  return (
-    <Avatar
-      sx={{ width: 56, height: 56, bgcolor: "#ffe0e0", color: "#800000" }}
-    >
-      <InsertDriveFile fontSize="large" />
-    </Avatar>
-  );
-}
 
 export function FilesUploader() {
   const [selectedFile, setSelectedFile] = useState(null);

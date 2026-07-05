@@ -29,6 +29,8 @@ import {
   Typography,
   Menu,
   MenuItem,
+  Collapse,
+  Checkbox,
 } from "@mui/material";
 import FormatSizeIcon from "@mui/icons-material/FormatSize";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -52,6 +54,10 @@ import HighlightIcon from "@mui/icons-material/Highlight";
 import FontDownloadIcon from "@mui/icons-material/FontDownload";
 import LinkIcon from "@mui/icons-material/Link";
 import CodeIcon from "@mui/icons-material/Code";
+import EditIcon from "@mui/icons-material/Edit";
+import LinkOffIcon from "@mui/icons-material/LinkOff";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { IoCloseCircle } from "react-icons/io5";
 import { API_BASE_URL } from "../../config";
 import { useTheme } from "@mui/material/styles";
@@ -111,6 +117,30 @@ const CustomLink = Link.extend({
   addAttributes() {
     return {
       ...this.parent?.(),
+      target: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("target"),
+        renderHTML: (attributes) => {
+          if (!attributes.target) {
+            return {};
+          }
+          return {
+            target: attributes.target,
+          };
+        }
+      },
+      rel: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("rel"),
+        renderHTML: (attributes) => {
+          if (!attributes.rel) {
+            return {};
+          }
+          return {
+            rel: attributes.rel,
+          };
+        }
+      },
       showAd: {
         default: false,
         parseHTML: (element) => element.getAttribute("data-show-ad") === "true",
@@ -155,8 +185,13 @@ export default function TiptapEditor({ onChange, initialContent }) {
 
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkInputUrl, setLinkInputUrl] = useState("");
+  const [linkInputText, setLinkInputText] = useState("");
+  const [linkOpenInNewTab, setLinkOpenInNewTab] = useState(false);
+  const [linkNofollow, setLinkNofollow] = useState(false);
+  const [linkSponsored, setLinkSponsored] = useState(false);
   const [linkShowAd, setLinkShowAd] = useState(false);
   const [linkIsPaste, setLinkIsPaste] = useState(false);
+  const [linkAdvancedOpen, setLinkAdvancedOpen] = useState(false);
 
   const [codeDialogOpen, setCodeDialogOpen] = useState(false);
   const [codeDialogPos, setCodeDialogPos] = useState(null);
@@ -702,11 +737,24 @@ export default function TiptapEditor({ onChange, initialContent }) {
         <Tooltip title="Insert Link">
           <IconButton
             onClick={() => {
-              const prevUrl = editor?.getAttributes("link")?.href || "";
-              const prevShowAd = editor?.getAttributes("link")?.showAd || false;
-              setLinkInputUrl(prevUrl);
-              setLinkShowAd(prevShowAd);
+              if (!editor) return;
+              let text = "";
+              if (editor.isActive("link")) {
+                editor.chain().focus().extendMarkRange("link").run();
+              }
+              const { from, to } = editor.state.selection;
+              text = editor.state.doc.textBetween(from, to, " ");
+              
+              const attrs = editor.getAttributes("link");
+              setLinkInputUrl(attrs.href || "");
+              setLinkInputText(text || "");
+              setLinkOpenInNewTab(attrs.target === "_blank");
+              const rel = attrs.rel || "";
+              setLinkNofollow(rel.includes("nofollow"));
+              setLinkSponsored(rel.includes("sponsored"));
+              setLinkShowAd(attrs.showAd || false);
               setLinkIsPaste(false);
+              setLinkAdvancedOpen(false);
               setLinkDialogOpen(true);
             }}
             disabled={!editor}
@@ -1026,6 +1074,95 @@ export default function TiptapEditor({ onChange, initialContent }) {
         </BubbleMenu>
       )}
 
+      {editor && (
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{
+            duration: 150,
+            placement: "bottom-start",
+          }}
+          shouldShow={({ editor }) => editor.isActive("link") && !editor.isActive("image")}
+        >
+          <Box
+            sx={{
+              background: "#fffaf5",
+              border: "1px solid #800000",
+              borderRadius: "8px",
+              boxShadow: "0px 4px 16px rgba(128, 0, 0, 0.15)",
+              p: 0.75,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: "bold",
+                color: "#800000",
+                px: 1,
+                borderRight: "1px solid #e6c8c8",
+                fontSize: "11px",
+                maxWidth: "180px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {editor.getAttributes("link").href || "Link"}
+            </Typography>
+
+            <Tooltip title="Edit Link">
+              <IconButton
+                size="small"
+                onClick={() => {
+                  const attrs = editor.getAttributes("link");
+                  editor.chain().focus().extendMarkRange("link").run();
+                  const { from, to } = editor.state.selection;
+                  const text = editor.state.doc.textBetween(from, to, " ");
+                  
+                  setLinkInputUrl(attrs.href || "");
+                  setLinkInputText(text || "");
+                  setLinkOpenInNewTab(attrs.target === "_blank");
+                  const rel = attrs.rel || "";
+                  setLinkNofollow(rel.includes("nofollow"));
+                  setLinkSponsored(rel.includes("sponsored"));
+                  setLinkShowAd(attrs.showAd || false);
+                  setLinkIsPaste(false);
+                  setLinkAdvancedOpen(false);
+                  setLinkDialogOpen(true);
+                }}
+                sx={{
+                  color: "#800000",
+                  "&:hover": {
+                    backgroundColor: "rgba(128, 0, 0, 0.08)",
+                  },
+                }}
+              >
+                <EditIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Unlink">
+              <IconButton
+                size="small"
+                onClick={() => {
+                  editor.chain().focus().unsetLink().run();
+                }}
+                sx={{
+                  color: "#d32f2f",
+                  "&:hover": {
+                    backgroundColor: "#fde8e8",
+                  },
+                }}
+              >
+                <LinkOffIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </BubbleMenu>
+      )}
+
       <input
         type="file"
         accept="image/*"
@@ -1035,94 +1172,280 @@ export default function TiptapEditor({ onChange, initialContent }) {
       />
 
       {/* Link Dialog */}
-      <Dialog open={linkDialogOpen} onClose={() => setLinkDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ color: "#800000", fontWeight: "bold" }}>
+      <Dialog
+        open={linkDialogOpen}
+        onClose={() => setLinkDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: "#fffaf5",
+            borderRadius: "10px",
+            border: "1px solid #800000",
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: "#800000", fontWeight: "bold", pb: 1 }}>
           {linkIsPaste ? "Pasted Link Options" : "Insert / Edit Link"}
         </DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="URL Address"
-            type="url"
-            fullWidth
-            variant="outlined"
-            value={linkInputUrl}
-            onChange={(e) => setLinkInputUrl(e.target.value)}
-            disabled={linkIsPaste}
-            sx={{
-              mt: 1,
-              "& .MuiOutlinedInput-root": {
-                "&.Mui-focused fieldset": {
-                  borderColor: "#800000",
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 1 }}>
+          
+          {/* TEXT Field */}
+          <Box>
+            <Typography variant="caption" display="block" sx={{ color: "#800000", fontWeight: "bold", mb: 0.5, letterSpacing: "0.5px" }}>
+              TEXT
+            </Typography>
+            <TextField
+              margin="none"
+              placeholder="e.g. Click Here"
+              fullWidth
+              variant="outlined"
+              value={linkInputText}
+              onChange={(e) => setLinkInputText(e.target.value)}
+              disabled={linkIsPaste}
+              sx={{
+                backgroundColor: "#fff",
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "#e6c8c8" },
+                  "&:hover fieldset": { borderColor: "#800000" },
+                  "&.Mui-focused fieldset": { borderColor: "#800000" },
                 },
-              },
-              "& label.Mui-focused": {
+              }}
+            />
+          </Box>
+
+          {/* LINK Field */}
+          <Box>
+            <Typography variant="caption" display="block" sx={{ color: "#800000", fontWeight: "bold", mb: 0.5, letterSpacing: "0.5px" }}>
+              LINK
+            </Typography>
+            <TextField
+              autoFocus
+              margin="none"
+              placeholder="https://example.com"
+              type="url"
+              fullWidth
+              variant="outlined"
+              value={linkInputUrl}
+              onChange={(e) => setLinkInputUrl(e.target.value)}
+              disabled={linkIsPaste}
+              sx={{
+                backgroundColor: "#fff",
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": { borderColor: "#e6c8c8" },
+                  "&:hover fieldset": { borderColor: "#800000" },
+                  "&.Mui-focused fieldset": { borderColor: "#800000" },
+                },
+              }}
+            />
+          </Box>
+
+          {/* Collapsible Advanced Settings */}
+          <Box>
+            <Box
+              onClick={() => setLinkAdvancedOpen(!linkAdvancedOpen)}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                cursor: "pointer",
+                userSelect: "none",
                 color: "#800000",
+                py: 0.5,
+                "&:hover": {
+                  opacity: 0.8,
+                },
+              }}
+            >
+              {linkAdvancedOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+              <Typography variant="body2" sx={{ fontWeight: "bold", ml: 0.5 }}>
+                Advanced
+              </Typography>
+            </Box>
+            <Collapse in={linkAdvancedOpen} timeout="auto" unmountOnExit>
+              <Box sx={{ display: "flex", flexDirection: "column", mt: 1, pl: 1, gap: 0.5 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={linkOpenInNewTab}
+                      onChange={(e) => setLinkOpenInNewTab(e.target.checked)}
+                      sx={{
+                        color: "#800000",
+                        "&.Mui-checked": { color: "#800000" },
+                      }}
+                    />
+                  }
+                  label="Open in new tab"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={linkNofollow}
+                      onChange={(e) => setLinkNofollow(e.target.checked)}
+                      sx={{
+                        color: "#800000",
+                        "&.Mui-checked": { color: "#800000" },
+                      }}
+                    />
+                  }
+                  label="Set to nofollow"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={linkSponsored}
+                      onChange={(e) => setLinkSponsored(e.target.checked)}
+                      sx={{
+                        color: "#800000",
+                        "&.Mui-checked": { color: "#800000" },
+                      }}
+                    />
+                  }
+                  label="Set to sponsored"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={linkShowAd}
+                      onChange={(e) => setLinkShowAd(e.target.checked)}
+                      sx={{
+                        "& .MuiSwitch-switchBase.Mui-checked": {
+                          color: "#800000",
+                          "&:hover": {
+                            backgroundColor: "rgba(128, 0, 0, 0.08)",
+                          },
+                        },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                          backgroundColor: "#800000",
+                        },
+                      }}
+                    />
+                  }
+                  label="Show Ad when this link is clicked"
+                  sx={{ mt: 1 }}
+                />
+              </Box>
+            </Collapse>
+          </Box>
+
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button
+            onClick={() => setLinkDialogOpen(false)}
+            variant="outlined"
+            sx={{
+              color: "#800000",
+              borderColor: "#800000",
+              textTransform: "none",
+              "&:hover": {
+                borderColor: "#600000",
+                backgroundColor: "rgba(128, 0, 0, 0.04)",
               },
             }}
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={linkShowAd}
-                onChange={(e) => setLinkShowAd(e.target.checked)}
-                sx={{
-                  "& .MuiSwitch-switchBase.Mui-checked": {
-                    color: "#800000",
-                    "&:hover": {
-                      backgroundColor: "rgba(128, 0, 0, 0.08)",
-                    },
-                  },
-                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                    backgroundColor: "#800000",
-                  },
-                }}
-              />
-            }
-            label="Show Ad when this link is clicked"
-            sx={{ mt: 2 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setLinkDialogOpen(false)} sx={{ color: "#666" }}>
+          >
             Cancel
           </Button>
           <Button
             onClick={() => {
-              const trimmed = linkInputUrl.trim();
-              if (trimmed) {
-                if (isEmbeddableUrl(trimmed)) {
-                  const attrs = toEmbedAttrs(trimmed);
+              const trimmedUrl = linkInputUrl.trim();
+              const trimmedText = linkInputText.trim();
+              if (trimmedUrl) {
+                if (isEmbeddableUrl(trimmedUrl)) {
+                  const attrs = toEmbedAttrs(trimmedUrl);
                   if (attrs) {
                     editor?.chain().focus().insertContent({ type: "embed", attrs }).run();
                   }
                 } else {
+                  // Compute target and rel
+                  let rels = [];
+                  if (linkOpenInNewTab) {
+                    rels.push("noopener", "noreferrer");
+                  }
+                  if (linkNofollow) {
+                    rels.push("nofollow");
+                  }
+                  if (linkSponsored) {
+                    rels.push("sponsored");
+                  }
+                  const relValue = rels.length > 0 ? rels.join(" ") : null;
+                  const targetValue = linkOpenInNewTab ? "_blank" : null;
+                  const finalLinkText = trimmedText || trimmedUrl;
+
                   if (linkIsPaste) {
                     editor?.chain().focus().insertContent({
                       type: "text",
-                      text: trimmed,
+                      text: finalLinkText,
                       marks: [
                         {
                           type: "link",
-                          attrs: { href: trimmed, showAd: linkShowAd }
+                          attrs: {
+                            href: trimmedUrl,
+                            target: targetValue,
+                            rel: relValue,
+                            showAd: linkShowAd
+                          }
                         }
                       ]
                     }).run();
                   } else {
-                    if (trimmed === "") {
-                      editor?.chain().focus().extendMarkRange("link").unsetLink().run();
+                    if (editor.isActive("link")) {
+                      // We want to edit the existing link.
+                      // First select the link range
+                      editor.chain().focus().extendMarkRange("link").run();
+                      const { from, to } = editor.state.selection;
+                      // Replace the content inside that range with finalLinkText and apply link mark
+                      editor.chain().focus().insertContentAt({ from, to }, {
+                        type: "text",
+                        text: finalLinkText,
+                        marks: [
+                          {
+                            type: "link",
+                            attrs: {
+                              href: trimmedUrl,
+                              target: targetValue,
+                              rel: relValue,
+                              showAd: linkShowAd
+                            }
+                          }
+                        ]
+                      }).run();
                     } else {
-                      editor?.chain().focus().extendMarkRange("link").setLink({ href: trimmed, showAd: linkShowAd }).run();
+                      // Insert new link at selection
+                      editor.chain().focus().insertContent({
+                        type: "text",
+                        text: finalLinkText,
+                        marks: [
+                          {
+                            type: "link",
+                            attrs: {
+                              href: trimmedUrl,
+                              target: targetValue,
+                              rel: relValue,
+                              showAd: linkShowAd
+                            }
+                          }
+                        ]
+                      }).run();
                     }
                   }
                 }
+              } else {
+                // If URL is empty, remove link
+                editor?.chain().focus().extendMarkRange("link").unsetLink().run();
               }
               setLinkDialogOpen(false);
             }}
-            sx={{ color: "#800000", fontWeight: "bold" }}
+            variant="contained"
+            sx={{
+              backgroundColor: "#800000",
+              color: "#fff",
+              textTransform: "none",
+              fontWeight: "bold",
+              "&:hover": {
+                backgroundColor: "#600000",
+              },
+            }}
           >
-            {linkIsPaste ? "Insert Pasted Link" : "Save Link"}
+            Apply
           </Button>
         </DialogActions>
       </Dialog>
