@@ -27,7 +27,7 @@ import {
   Divider,
   Grid
 } from "@mui/material";
-import { Add as AddIcon, ExpandMore, Edit, Delete, ContentCopy } from "@mui/icons-material";
+import { Add as AddIcon, ExpandMore, Edit, Delete, ContentCopy, ArrowUpward, ArrowDownward } from "@mui/icons-material";
 import { ConfirmDialog } from "../../components/Dialog/Dialog";
 import { API_BASE_URL } from "../../config";
 import { useToast } from "../../context/ToastContext";
@@ -252,6 +252,78 @@ export function CategoryManagement() {
     cat.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleMoveCategory = async (index, direction) => {
+    if (search.trim() !== "") {
+      showToast("Please clear search filter to reorder categories", "warning");
+      return;
+    }
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= categories.length) return;
+
+    const newCategories = [...categories];
+    const temp = newCategories[index];
+    newCategories[index] = newCategories[targetIndex];
+    newCategories[targetIndex] = temp;
+    setCategories(newCategories);
+
+    try {
+      const orderedSlugs = newCategories.map((c) => c.slug);
+      const res = await fetch(`${API_BASE_URL}/api/category/reorder`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ orderedSlugs })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        showToast(data.message || "Failed to save category order", "error");
+      } else {
+        showToast("Category order updated successfully", "success");
+      }
+    } catch (err) {
+      console.error("Error reordering categories:", err);
+      showToast("Error updating category order", "error");
+    }
+  };
+
+  const handleMoveSubcategory = async (categorySlug, subIndex, direction) => {
+    const catIndex = categories.findIndex((c) => c.slug === categorySlug);
+    if (catIndex === -1) return;
+    const subs = [...(categories[catIndex].subcategories || [])];
+    const targetIndex = direction === "up" ? subIndex - 1 : subIndex + 1;
+    if (targetIndex < 0 || targetIndex >= subs.length) return;
+
+    const temp = subs[subIndex];
+    subs[subIndex] = subs[targetIndex];
+    subs[targetIndex] = temp;
+
+    const updatedCategories = [...categories];
+    updatedCategories[catIndex] = {
+      ...updatedCategories[catIndex],
+      subcategories: subs
+    };
+    setCategories(updatedCategories);
+
+    try {
+      const orderedSlugs = subs.map((s) => s.slug);
+      const res = await fetch(`${API_BASE_URL}/api/category/reorder-subcategories`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ parentSlug: categorySlug, orderedSlugs })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        showToast(data.message || "Failed to save subcategory order", "error");
+      } else {
+        showToast("Subcategory order updated successfully", "success");
+      }
+    } catch (err) {
+      console.error("Error reordering subcategories:", err);
+      showToast("Error updating subcategory order", "error");
+    }
+  };
+
   const handleDeleteCategory = (categorySlug) => {
     setPendingDeleteSlug(categorySlug);
     setConfirmOpen(true);
@@ -394,7 +466,7 @@ export function CategoryManagement() {
             No categories found.
           </Typography>
         ) : (
-          filteredCategories.map((category) => (
+          filteredCategories.map((category, index) => (
             <Accordion key={category._id} sx={{ mb: 2, background: "#fffaf5" }}>
               <AccordionSummary
                 expandIcon={<ExpandMore sx={{ color: "#800000" }} />}
@@ -402,6 +474,29 @@ export function CategoryManagement() {
                   "& .MuiAccordionSummary-content": { alignItems: "center" }
                 }}
               >
+                <Box
+                  sx={{ display: "flex", alignItems: "center", mr: 1.5 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <IconButton
+                    size="small"
+                    disabled={index === 0 || search.trim() !== ""}
+                    onClick={() => handleMoveCategory(index, "up")}
+                    sx={{ color: index === 0 ? "#ccc" : "#800000", p: 0.5 }}
+                    title="Move Category Up"
+                  >
+                    <ArrowUpward fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    disabled={index === filteredCategories.length - 1 || search.trim() !== ""}
+                    onClick={() => handleMoveCategory(index, "down")}
+                    sx={{ color: index === filteredCategories.length - 1 ? "#ccc" : "#800000", p: 0.5 }}
+                    title="Move Category Down"
+                  >
+                    <ArrowDownward fontSize="small" />
+                  </IconButton>
+                </Box>
                 <Typography sx={{ fontWeight: 600, color: "#800000" }}>
                   {category.name}
                 </Typography>
@@ -476,7 +571,7 @@ export function CategoryManagement() {
                   Subcategories:
                 </Typography>
                 {category.subcategories && category.subcategories.length > 0 ? (
-                  category.subcategories.map((sub) => (
+                  category.subcategories.map((sub, subIdx) => (
                     <Paper
                       key={sub._id}
                       sx={{
@@ -488,6 +583,26 @@ export function CategoryManagement() {
                       }}
                       elevation={0}
                     >
+                      <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
+                        <IconButton
+                          size="small"
+                          disabled={subIdx === 0}
+                          onClick={() => handleMoveSubcategory(category.slug, subIdx, "up")}
+                          sx={{ color: subIdx === 0 ? "#ccc" : "#800000", p: 0.3 }}
+                          title="Move Subcategory Up"
+                        >
+                          <ArrowUpward fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          disabled={subIdx === category.subcategories.length - 1}
+                          onClick={() => handleMoveSubcategory(category.slug, subIdx, "down")}
+                          sx={{ color: subIdx === category.subcategories.length - 1 ? "#ccc" : "#800000", p: 0.3 }}
+                          title="Move Subcategory Down"
+                        >
+                          <ArrowDownward fontSize="small" />
+                        </IconButton>
+                      </Box>
                       <Typography sx={{ flex: 1, color: "#800000" }}>
                         {sub.name}
                       </Typography>
