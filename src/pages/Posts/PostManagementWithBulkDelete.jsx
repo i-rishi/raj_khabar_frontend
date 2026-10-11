@@ -411,7 +411,7 @@ export default function PostManagementWithBulkDelete() {
                     Carousel
                   </TableCell>
                   <TableCell sx={{ color: "#800000", fontWeight: 700, bgcolor: "#ffe0e0" }}>
-                    Date
+                    Last Updated / Date
                   </TableCell>
                   <TableCell sx={{ color: "#800000", fontWeight: 700, bgcolor: "#ffe0e0" }}>
                     Actions
@@ -489,7 +489,16 @@ export default function PostManagementWithBulkDelete() {
                       </Tooltip>
                     </TableCell>
                     <TableCell>
-                      {new Date(post.createdAt).toLocaleDateString()}
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: "#222" }}>
+                        {post.updatedAt
+                          ? new Date(post.updatedAt).toLocaleDateString()
+                          : new Date(post.createdAt).toLocaleDateString()}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "#666", display: "block" }}>
+                        {post.updatedAt
+                          ? new Date(post.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                          : new Date(post.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </Typography>
                     </TableCell>
                     <TableCell>
                       <IconButton

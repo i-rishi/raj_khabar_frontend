@@ -181,10 +181,6 @@ export function PostEditPage() {
         formData.append("removeImage", "true");
       }
 
-      if (post?.isVisibleInCarousel === true && !data.isVisibleInCarousel) {
-        formData.append("skipTimestampUpdate", "true");
-      }
-
       const res = await fetch(`${API_BASE_URL}/api/post/${id}`, {
         method: "PATCH",
         body: formData,
