@@ -45,7 +45,8 @@ export function PostFields({ register, errors, watch, setValue, post }) {
   };
 
   const handleRemoveImage = () => {
-    setValue("image", null);
+    setValue("image", null, { shouldDirty: true, shouldValidate: true });
+    setValue("imageUrl", "", { shouldDirty: true, shouldValidate: true });
     setImageRemoved(true);
   };
 
@@ -265,7 +266,8 @@ export function PostFields({ register, errors, watch, setValue, post }) {
           onChange={(e) => {
             const file = e.target.files[0];
             if (file) {
-              setValue("image", file); // store in react-hook-form
+              setValue("image", file, { shouldDirty: true, shouldValidate: true });
+              setImageRemoved(false);
             }
           }}
           style={{ marginBottom: "8px" }}

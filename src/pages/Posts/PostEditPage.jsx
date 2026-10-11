@@ -66,6 +66,7 @@ export function PostEditPage() {
             type: data.post.type || "",
             publishedAt: data.post.publishedAt || "",
             imageUrl: data.post.imageUrl || "",
+            image: null,
           });
         } else {
           showToast(data.message || "Failed to fetch post.", "error");
@@ -99,8 +100,12 @@ export function PostEditPage() {
         }
       });
 
-      if (data.image && data.image instanceof File) {
-        formData.append("image", data.image);
+      // Ensure image file is properly extracted from data or form values
+      const imageFile = data.image || methods.getValues("image");
+      if (imageFile && imageFile instanceof File) {
+        formData.append("image", imageFile);
+      } else if (data.imageUrl === "" || !data.imageUrl) {
+        formData.append("removeImage", "true");
       }
 
       if (post?.isVisibleInCarousel === true && !data.isVisibleInCarousel) {
