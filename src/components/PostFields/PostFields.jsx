@@ -136,7 +136,7 @@ export function PostFields({ register, errors, watch, setValue, post }) {
         >
           <MenuItem value="draft">Draft</MenuItem>
           <MenuItem value="published">Published</MenuItem>
-          <MenuItem value="Archived">Archived</MenuItem>
+          <MenuItem value="archived">Archived</MenuItem>
         </TextField>
       </Grid>
       <Grid size={6}>

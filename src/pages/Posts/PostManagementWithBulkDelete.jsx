@@ -45,7 +45,7 @@ export default function PostManagementWithBulkDelete() {
   const { showToast } = useToast();
 
   const [posts, setPosts] = useState([]);
-  const [status, setStatus] = useState(location.state?.status || "");
+  const [status, setStatus] = useState(location.state?.status || "all");
   const [search, setSearch] = useState(location.state?.search || "");
   const [page, setPage] = useState(location.state?.page || 0); // 0-indexed for TablePagination
   const [rowsPerPage, setRowsPerPage] = useState(location.state?.rowsPerPage || 10);
@@ -113,7 +113,11 @@ export default function PostManagementWithBulkDelete() {
   const fetchPosts = async () => {
     setLoading(true);
     let url = `${API_BASE_URL}/api/post/posts?page=${page + 1}&limit=${rowsPerPage}`;
-    if (status) url += `&status=${status}`;
+    if (status) {
+      url += `&status=${encodeURIComponent(status)}`;
+    } else {
+      url += `&status=all`;
+    }
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (selectedCategory) url += `&category=${selectedCategory}`;
     if (selectedSubcategory) url += `&subcategory=${selectedSubcategory}`;
@@ -293,7 +297,7 @@ export default function PostManagementWithBulkDelete() {
               }}
               sx={{ color: "#800000" }}
             >
-              <MenuItem value="">All Status</MenuItem>
+              <MenuItem value="all">All Status</MenuItem>
               <MenuItem value="published">Published</MenuItem>
               <MenuItem value="draft">Draft</MenuItem>
               <MenuItem value="archived">Archived</MenuItem>
