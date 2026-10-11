@@ -103,6 +103,10 @@ export function PostEditPage() {
         formData.append("image", data.image);
       }
 
+      if (post?.isVisibleInCarousel === true && !data.isVisibleInCarousel) {
+        formData.append("skipTimestampUpdate", "true");
+      }
+
       const res = await fetch(`${API_BASE_URL}/api/post/${id}`, {
         method: "PATCH",
         body: formData,

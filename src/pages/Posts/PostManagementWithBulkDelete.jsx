@@ -19,7 +19,9 @@ import {
   TableContainer,
   TablePagination,
   FormControl,
-  InputLabel
+  InputLabel,
+  Switch,
+  Tooltip
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -149,6 +151,37 @@ export default function PostManagementWithBulkDelete() {
       }
     } catch (error) {
       showToast("Failed to delete post.", "error");
+    }
+  };
+
+  const handleToggleCarousel = async (post) => {
+    const newStatus = !post.isVisibleInCarousel;
+    try {
+      const formData = new FormData();
+      formData.append("isVisibleInCarousel", newStatus.toString());
+      formData.append("skipTimestampUpdate", "true");
+
+      const res = await fetch(`${API_BASE_URL}/api/post/${post._id}`, {
+        method: "PATCH",
+        body: formData,
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(
+          newStatus ? "Post added to Carousel!" : "Post removed from Carousel!",
+          "success"
+        );
+        setPosts((prevPosts) =>
+          prevPosts.map((p) =>
+            p._id === post._id ? { ...p, isVisibleInCarousel: newStatus } : p
+          )
+        );
+      } else {
+        showToast(data.message || "Failed to update carousel status.", "error");
+      }
+    } catch (error) {
+      showToast("Failed to update carousel status.", "error");
     }
   };
 
@@ -370,6 +403,9 @@ export default function PostManagementWithBulkDelete() {
                   <TableCell sx={{ color: "#800000", fontWeight: 700, bgcolor: "#ffe0e0" }}>
                     Status
                   </TableCell>
+                  <TableCell sx={{ color: "#800000", fontWeight: 700, bgcolor: "#ffe0e0" }} align="center">
+                    Carousel
+                  </TableCell>
                   <TableCell sx={{ color: "#800000", fontWeight: 700, bgcolor: "#ffe0e0" }}>
                     Date
                   </TableCell>
@@ -381,7 +417,7 @@ export default function PostManagementWithBulkDelete() {
               <TableBody>
                 {posts.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       No posts found.
                     </TableCell>
                   </TableRow>
@@ -429,6 +465,24 @@ export default function PostManagementWithBulkDelete() {
                           color: "#4d0000"
                         }}
                       />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Tooltip title={post.isVisibleInCarousel ? "Visible in Carousel (Click to remove)" : "Not in Carousel (Click to add)"}>
+                        <Switch
+                          size="small"
+                          checked={Boolean(post.isVisibleInCarousel)}
+                          onChange={() => handleToggleCarousel(post)}
+                          disabled={isBulkDeleting}
+                          sx={{
+                            "& .MuiSwitch-switchBase.Mui-checked": {
+                              color: "#800000",
+                              "& + .MuiSwitch-track": {
+                                backgroundColor: "#800000",
+                              },
+                            },
+                          }}
+                        />
+                      </Tooltip>
                     </TableCell>
                     <TableCell>
                       {new Date(post.createdAt).toLocaleDateString()}
