@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import {
-  BrowserRouter,
-  Routes,
+  createBrowserRouter,
+  createRoutesFromElements,
+  RouterProvider,
   Route,
+  Outlet,
   useLocation,
   Navigate
 } from "react-router-dom";
@@ -78,7 +80,7 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-function AppContent() {
+function AppLayout() {
   const [drawerOpen, setDrawerOpen] = useState(true);
   const location = useLocation();
 
@@ -91,30 +93,37 @@ function AppContent() {
     location.pathname === "/login" || location.pathname === "/";
 
   return (
-    <UserProvider>
-      <div>
-        <CategoryProvider>
-          {!hideLayout && (
-            <Header onMenuClick={toggleDrawer} isDrawerOpen={drawerOpen} />
-          )}
-          <div className="main d-flex">
-            {!hideLayout && (
-              <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-            )}
+    <div>
+      {!hideLayout && (
+        <Header onMenuClick={toggleDrawer} isDrawerOpen={drawerOpen} />
+      )}
+      <div className="main d-flex">
+        {!hideLayout && (
+          <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+        )}
 
-            <div
-              className="content"
-              style={{
-                marginLeft: !hideLayout
-                  ? drawerOpen
-                    ? SIDEBAR_EXPANDED_WIDTH
-                    : SIDEBAR_COLLAPSED_WIDTH
-                  : 0,
-                transition: "margin-left 0.3s ease"
-              }}
-            >
-              <Routes>
-                <Route path="/" element={<LoginPage />} />
+        <div
+          className="content"
+          style={{
+            marginLeft: !hideLayout
+              ? drawerOpen
+                ? SIDEBAR_EXPANDED_WIDTH
+                : SIDEBAR_COLLAPSED_WIDTH
+              : 0,
+            transition: "margin-left 0.3s ease"
+          }}
+        >
+          <Outlet />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<AppLayout />}>
+      <Route path="/" element={<LoginPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route
                   path="/dashboard"
@@ -359,21 +368,18 @@ function AppContent() {
                 />
                 {/* Add more protected routes here */}
                 <Route path="*" element={<Navigate to="/dashboard" />} />
-              </Routes>
-            </div>
-          </div>
-        </CategoryProvider>
-      </div>
-    </UserProvider>
-  );
-}
+    </Route>
+  )
+);
 
 function App() {
   return (
     <ToastProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
+      <UserProvider>
+        <CategoryProvider>
+          <RouterProvider router={router} />
+        </CategoryProvider>
+      </UserProvider>
     </ToastProvider>
   );
 }

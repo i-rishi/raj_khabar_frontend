@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { useForm, FormProvider } from "react-hook-form";
+import { useParams, useNavigate, useLocation, useBlocker } from "react-router-dom";
 import { PostForm } from "../../components/PostForm/PostForm";
 import { API_BASE_URL } from "../../config";
 import { CircularProgress, Box } from "@mui/material";
 import { useToast } from "../../context/ToastContext";
-import { FormProvider } from "react-hook-form";
+import { UnsavedChangesDialog } from "../../components/UnsavedChangesDialog/UnsavedChangesDialog";
 
 export function PostEditPage() {
   const { id } = useParams();
@@ -15,14 +15,38 @@ export function PostEditPage() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [post, setPost] = useState(null);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const isSubmittedRef = useRef(false);
 
   // Set up react-hook-form
   const methods = useForm();
+  const { reset, getValues } = methods;
 
-  const {
-    reset,
-  } = methods;
+  // Helper to check if there are unsaved changes
+  const hasUnsavedChanges = useCallback(() => {
+    if (isSubmittedRef.current || !post) return false;
+    return methods.formState.isDirty;
+  }, [methods.formState.isDirty, post]);
 
+  // Block route transitions when dirty
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      !isSubmittedRef.current &&
+      hasUnsavedChanges() &&
+      currentLocation.pathname !== nextLocation.pathname
+  );
+
+  // Protect against tab closing / reload
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (!isSubmittedRef.current && hasUnsavedChanges()) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   // Fetch post data by ID
   useEffect(() => {
@@ -35,17 +59,14 @@ export function PostEditPage() {
         const data = await res.json();
         if (data.success) {
           setPost(data.post);
-          console.log("Fetched post data:", data.post);
           let content = data.post.content;
           if (typeof content === "string") {
             try {
               content = JSON.parse(content);
             } catch (e) {
-              // If parsing fails, keep it as string or handle error
               console.error("Failed to parse content JSON:", e);
             }
           }
-          // Call reset here with the correct field mapping
           reset({
             title: data.post.title || "",
             slug: data.post.slug || "",
@@ -81,6 +102,58 @@ export function PostEditPage() {
     // eslint-disable-next-line
   }, [id, reset]);
 
+  const handleSaveAsDraft = async () => {
+    try {
+      setIsSavingDraft(true);
+      const data = getValues();
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        if (key !== "image") {
+          if (key === "tags") {
+            const tagsVal = Array.isArray(value) ? value : [];
+            formData.append(key, JSON.stringify(tagsVal));
+          } else if (value === null || value === undefined) {
+            formData.append(key, "");
+          } else if (typeof value === "object") {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, value);
+          }
+        }
+      });
+
+      formData.set("status", "draft");
+
+      const imageFile = data.image || getValues("image");
+      if (imageFile && imageFile instanceof File) {
+        formData.append("image", imageFile);
+      }
+
+      const res = await fetch(`${API_BASE_URL}/api/post/${id}`, {
+        method: "PATCH",
+        body: formData,
+        credentials: "include",
+      });
+      const result = await res.json();
+      if (result.success) {
+        showToast("Post saved as draft successfully!", "success");
+        isSubmittedRef.current = true;
+        if (blocker.state === "blocked") {
+          blocker.proceed();
+        } else {
+          navigate("/posts", { state: location.state });
+        }
+      } else {
+        showToast(result.message || "Failed to save post as draft.", "error");
+      }
+    } catch (err) {
+      console.error("Error saving draft:", err);
+      showToast("Error saving draft: " + err.message, "error");
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
   const onSubmit = async (data) => {
     try {
       const formData = new FormData();
@@ -101,7 +174,7 @@ export function PostEditPage() {
       });
 
       // Ensure image file is properly extracted from data or form values
-      const imageFile = data.image || methods.getValues("image");
+      const imageFile = data.image || getValues("image");
       if (imageFile && imageFile instanceof File) {
         formData.append("image", imageFile);
       } else if (data.imageUrl === "" || !data.imageUrl) {
@@ -118,8 +191,8 @@ export function PostEditPage() {
         credentials: "include",
       });
       const result = await res.json();
-      console.log("Edit Post Response:", result);
       if (result.success) {
+        isSubmittedRef.current = true;
         showToast("Post updated successfully!", "success");
         navigate("/posts", { state: location.state });
       } else {
@@ -147,7 +220,24 @@ export function PostEditPage() {
     <FormProvider {...methods}>
       <PostForm
         onSubmit={onSubmit}
+        onSaveDraft={handleSaveAsDraft}
+        isSavingDraft={isSavingDraft}
         post={post}
+      />
+
+      <UnsavedChangesDialog
+        open={blocker.state === "blocked"}
+        title="Save Post as Draft?"
+        message="You have unsaved changes in this post. Would you like to save it as a draft before leaving?"
+        onSaveDraft={handleSaveAsDraft}
+        onDiscard={() => {
+          isSubmittedRef.current = true;
+          if (blocker.state === "blocked") blocker.proceed();
+        }}
+        onCancel={() => {
+          if (blocker.state === "blocked") blocker.reset();
+        }}
+        isSaving={isSavingDraft}
       />
     </FormProvider>
   );
